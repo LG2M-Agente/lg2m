@@ -45,12 +45,13 @@ Acesse a aplicação web em: `http://localhost:3000`
 
 ## 📚 Documentação Completa
 
-Toda a engenharia de dados, decisões arquiteturais (ADRs), contratos de API e relatórios experimentais estão fartamente documentados no diretório [`docs/`](../docs/):
+Toda a engenharia de dados, decisões arquiteturais (ADRs), contratos de API e relatórios experimentais estão fartamente documentados no diretório [`docs/`](docs/):
 
-- [`docs/plano_execucao_mvp.md`](../docs/plano_execucao_mvp.md): Plano de execução mestre do MVP em 7 fases.
-- [`docs/api_contracts.md`](../docs/api_contracts.md): Especificação completa dos contratos de API REST e SSE.
-- [`docs/arquitetura_multiagente.md`](../docs/arquitetura_multiagente.md): Grafo de estados e nós do LangGraph.
-- [`docs/data_pipeline.md`](../docs/data_pipeline.md): Engenharia de dados e schema canônico.
-- [`docs/reports/experimento_flywheel.md`](../docs/reports/experimento_flywheel.md): Validação científica do Efeito Flywheel Cross-Banca.
-- [`docs/reports/auditoria_dataset_mvp.md`](../docs/reports/auditoria_dataset_mvp.md): Certificação formal do dataset de 5.771 questões.
-- [`docs/roteiro_demo_pitch.md`](../docs/roteiro_demo_pitch.md): Roteiro cronometrado para apresentação do pitch.
+- [`docs/plano_execucao_mvp.md`](docs/plano_execucao_mvp.md): Plano de execução mestre do MVP em 7 fases.
+- [`docs/api_contracts.md`](docs/api_contracts.md): Especificação completa dos contratos de API REST e SSE.
+- [`docs/proposta_melhoria_busca_vetorial.md`](docs/proposta_melhoria_busca_vetorial.md): Arquitetura de evolução da busca vetorial (Two-Stage Retrieval, RRF, Cross-Encoder, HyDE).
+- [`docs/arquitetura_multiagente.md`](docs/arquitetura_multiagente.md): Grafo de estados e nós do LangGraph.
+- [`docs/data_pipeline.md`](docs/data_pipeline.md): Engenharia de dados e schema canônico.
+- [`docs/reports/experimento_flywheel.md`](docs/reports/experimento_flywheel.md): Validação científica do Efeito Flywheel Cross-Banca.
+- [`docs/reports/auditoria_dataset_mvp.md`](docs/reports/auditoria_dataset_mvp.md): Certificação formal do dataset de 6.158 questões canônicas.
+- [`docs/roteiro_demo_pitch.md`](docs/roteiro_demo_pitch.md): Roteiro cronometrado para apresentação do pitch.
