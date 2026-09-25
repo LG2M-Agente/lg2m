@@ -11,6 +11,7 @@ from sqlalchemy.sql.expression import func
 from app.core.database import get_db
 from app.models.entities import Simulado, ItemSimulado, Questao, PerfilEstudante, TentativaQuestao
 from app.schemas.api_schemas import SimuladoCreateRequest, SimuladoSubmitRequest
+from app.agents.profiler_agent import diagnose_simulado_battery
 
 router = APIRouter(prefix="/simulados", tags=["Simulados Gerais & Temáticos"])
 
@@ -187,15 +188,8 @@ def submit_simulado(
 
     taxa_aproveitamento = round((total_acertos / max(1, sim.total_questoes)) * 100.0, 1)
 
-    # Gera parecer diagnóstico pedagógico
-    disciplinas_baixas = [d for d, stats in desempenho_por_disciplina.items() if (stats["acertos"] / max(1, stats["total"])) < 0.6]
-    if taxa_aproveitamento >= 80.0:
-        diagnostico_ia = f"Excelente desempenho! Você atingiu {taxa_aproveitamento}% de aproveitamento geral, compatível com os primeiros colocados de cursos concorridos. Mantenha o ritmo de revisões espaçadas."
-    elif taxa_aproveitamento >= 60.0:
-        diag_disc = ", ".join(disciplinas_baixas) if disciplinas_baixas else "tópicos específicos"
-        diagnostico_ia = f"Bom rendimento ({taxa_aproveitamento}%), porém com pontos de atenção identificados em {diag_disc}. Recomendamos focar nas questões correlatas geradas pelo motor RAG."
-    else:
-        diagnostico_ia = f"Aproveitamento de {taxa_aproveitamento}%. Foram detectadas lacunas conceituais severas em {', '.join(disciplinas_baixas) if disciplinas_baixas else 'múltiplas disciplinas'}. Priorize sessões de dissecação com o Mentor Didático nos tópicos indicados."
+    # Aciona o Agente Profiler para diagnóstico pedagógico reflexivo e atualização do dossiê cognitivo
+    diagnostico_ia = diagnose_simulado_battery(sim.id, db)
 
     return {
         "simulado_id": sim.id,

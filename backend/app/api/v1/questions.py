@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.models.entities import Questao, Certame, Assunto
 from app.schemas.api_schemas import QuestionSearchRequest, QuestionDetailResponse
 from app.agents.graph import multiagent_engine
+from app.services.vector_search import vector_search_service
 
 router = APIRouter(prefix="/questions", tags=["Questões & Busca Semântica"])
 
@@ -36,35 +37,61 @@ def search_questions_get(
 def search_questions(req: QuestionSearchRequest, db: Session = Depends(get_db)):
     """
     Busca semântica híbrida: combina filtros relacionais SQL (certame, etapa, disciplina, ano)
-    com relevância temática em linguagem natural.
+    com relevância vetorial densa por similaridade de cosseno em linguagem natural.
     O gabarito oficial é rigorosamente blindado no backend.
     """
     query_builder = db.query(Questao)
 
     # Filtros relacionais
+    tem_filtro_relacional = False
     if req.certame and req.certame != "ALL":
         query_builder = query_builder.join(Questao.certame).filter(Certame.sigla == req.certame)
+        tem_filtro_relacional = True
 
-    if req.etapa:
+    if req.etapa and req.etapa != "ALL":
         query_builder = query_builder.filter(Questao.etapa_edicao == req.etapa)
+        tem_filtro_relacional = True
 
-    if req.disciplina:
+    if req.disciplina and req.disciplina != "ALL":
         query_builder = query_builder.filter(Questao.disciplina_nome.ilike(f"%{req.disciplina}%"))
+        tem_filtro_relacional = True
 
     if req.ano:
         query_builder = query_builder.filter(Questao.ano == req.ano)
+        tem_filtro_relacional = True
 
-    # Busca textual por termos-chave da consulta livre
-    termos = [t.strip() for t in req.query.split() if len(t.strip()) >= 3]
-    if termos:
-        condicoes = []
-        for t in termos:
-            condicoes.append(Questao.enunciado.ilike(f"%{t}%"))
-            condicoes.append(Questao.disciplina_nome.ilike(f"%{t}%"))
-            condicoes.append(Questao.topico_especifico.ilike(f"%{t}%"))
-        query_builder = query_builder.filter(or_(*condicoes))
+    resultados = []
 
-    resultados = query_builder.limit(req.limit).all()
+    # 1. Tenta Busca Vetorial Densa Real com FastEmbed
+    if vector_search_service.is_ready() and req.query and req.query.strip():
+        allowed_ids = None
+        if tem_filtro_relacional:
+            candidatos_rel = query_builder.with_entities(Questao.id).all()
+            allowed_ids = {row[0] for row in candidatos_rel}
+
+        vector_matches = vector_search_service.search(
+            query=req.query,
+            top_k=req.limit,
+            allowed_ids=allowed_ids,
+            min_score=0.10
+        )
+        if vector_matches:
+            ids_em_ordem = [qid for qid, _ in vector_matches]
+            # Recupera objetos do banco mantendo a ordem vetorial
+            questoes_map = {q.id: q for q in db.query(Questao).filter(Questao.id.in_(ids_em_ordem)).all()}
+            resultados = [questoes_map[qid] for qid in ids_em_ordem if qid in questoes_map]
+
+    # 2. Fallback por termos-chave se o índice não retornou itens
+    if not resultados:
+        termos = [t.strip() for t in req.query.split() if len(t.strip()) >= 3]
+        if termos:
+            condicoes = []
+            for t in termos:
+                condicoes.append(Questao.enunciado.ilike(f"%{t}%"))
+                condicoes.append(Questao.disciplina_nome.ilike(f"%{t}%"))
+                condicoes.append(Questao.topico_especifico.ilike(f"%{t}%"))
+            query_builder = query_builder.filter(or_(*condicoes))
+        resultados = query_builder.limit(req.limit).all()
 
     # Formata resposta sem expor gabarito
     response_items = []

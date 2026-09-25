@@ -96,6 +96,8 @@ class StudentProfileResponse(BaseModel):
     taxa_acerto_geral: float
     pontos_cegos_count: int
     tempo_medio_segundos: float
+    dossie_cognitivo_markdown: Optional[str] = None
+    versao_perfil: int = 1
 
 
 class StudentProfileUpdateRequest(BaseModel):

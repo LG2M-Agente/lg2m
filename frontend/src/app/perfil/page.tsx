@@ -197,6 +197,27 @@ export default function PerfilPage() {
           </button>
         </div>
       </div>
+
+      {/* Dossiê Cognitivo Vivo (Memória do Profiler Agent) */}
+      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-white font-bold text-base">
+            <Brain className="w-5 h-5 text-emerald-400" />
+            <span>Dossiê Cognitivo & Memória Evolutiva (Profiler Agent)</span>
+          </div>
+          <span className="text-xs text-slate-400 font-mono">
+            Versão {profile?.versao_perfil || 1}
+          </span>
+        </div>
+        <p className="text-xs text-slate-400">
+          Este dossiê reflete a memória epistêmica de longo prazo que o Agente Profiler atualiza a cada bateria de questões respondidas.
+        </p>
+        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 text-slate-300 font-mono text-xs whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto">
+          {profile?.dossie_cognitivo_markdown || (
+            "Dossiê em fase de calibração inicial. Responda a questões ou simulados para que o Profiler registre seus padrões cognitivos."
+          )}
+        </div>
+      </div>
     </div>
   );
 }

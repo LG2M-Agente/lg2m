@@ -140,6 +140,11 @@ class PerfilEstudante(Base):
     usuario_id = Column(String(36), ForeignKey("usuarios.id"), nullable=False)
     certame_foco = Column(String(50), default="PSC")
     estilo_didatico_padrao = Column(String(50), default="DIRETO")  # DIRETO, SOCRATICO, TEORICO
+
+    # Dossiê Epistêmico & Memória de Longo Prazo gerada e atualizada pelo Profiler Agent
+    dossie_cognitivo_markdown = Column(Text, nullable=True)
+    versao_perfil = Column(Integer, default=1)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     usuario = relationship("Usuario", back_populates="perfis")
@@ -194,6 +199,7 @@ class Simulado(Base):
     tempo_limite_minutos = Column(Integer, default=180)
     tempo_utilizado_segundos = Column(Integer, default=0)
     status = Column(String(50), default="EM_ANDAMENTO")  # EM_ANDAMENTO, FINALIZADO
+    diagnostico_profiler = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     perfil = relationship("PerfilEstudante", back_populates="simulados")

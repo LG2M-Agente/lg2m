@@ -54,6 +54,8 @@ export interface StudentProfile {
   taxa_acerto_geral: number;
   pontos_cegos_count: number;
   tempo_medio_segundos: number;
+  dossie_cognitivo_markdown?: string | null;
+  versao_perfil?: number;
 }
 
 export interface SimuladoSummary {

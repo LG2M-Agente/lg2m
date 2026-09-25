@@ -18,6 +18,10 @@ def router_node(state: AgentState) -> Dict[str, Any]:
     if intent_existente and intent_existente != "INDEFINIDO":
         return {"intent_detected": intent_existente}
 
+    user_msg = state.get("user_input_message") or ""
+    selected_alt = state.get("selected_alternative")
+    current_q = state.get("current_question_data")
+
     # Sanitização básica contra prompt injection ou desvios de persona
     forbidden_terms = ["ignore all previous instructions", "system prompt", "jailbreak", "dan mode"]
     if any(term in user_msg.lower() for term in forbidden_terms):
