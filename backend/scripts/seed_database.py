@@ -132,7 +132,8 @@ def seed():
 
                 # Questao Model
                 q_id = q_data["id"]
-                if not db.query(Questao.id).filter_by(id=q_id).first():
+                q_existente = db.query(Questao).filter_by(id=q_id).first()
+                if not q_existente:
                     q_obj = Questao(
                         id=q_id,
                         codigo_referencia=q_data.get("codigo_referencia", q_id),
@@ -171,6 +172,16 @@ def seed():
                         )
                         db.add(alt_obj)
                         total_alternativas_inseridas += 1
+                else:
+                    # Atualiza taxonomia enriquecida de questões existentes
+                    q_existente.assunto_id = assunto_id
+                    q_existente.disciplina_nome = disc_nome
+                    q_existente.area_conhecimento = area_nome
+                    q_existente.topico_especifico = q_data.get("topico_especifico")
+                    q_existente.enunciado = q_data.get("enunciado", "")
+                    q_existente.tags = q_data.get("tags", [])
+                    q_existente.possui_formula_matematica = q_data.get("possui_formula_matematica", False)
+                    total_questoes_inseridas += 1
 
                 if idx % batch_size == 0:
                     db.commit()
