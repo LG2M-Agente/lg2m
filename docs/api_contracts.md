@@ -40,7 +40,7 @@ graph TD
 ## 2. Endpoints do Módulo Questões (`/api/v1/questions`)
 
 ### 2.1. Busca Semântica e Filtros Curriculares
-Permite pesquisar o acervo de 5.771 questões históricas por texto livre, certame, etapa, disciplina ou ano.
+Permite pesquisar o acervo de 6.158 questões canônicas certificadas por texto livre, certame, etapa, disciplina ou ano.
 
 - **Métodos:** `GET /api/v1/questions/search` | `POST /api/v1/questions/search`
 - **Query Params (GET) ou JSON Body (POST):**
@@ -79,6 +79,8 @@ Permite pesquisar o acervo de 5.771 questões históricas por texto livre, certa
     "tem_imagem": false,
     "imagens": [],
     "possui_formula_matematica": true,
+    "descricao_detalhada": "Problema de plano inclinado com atrito cinético onde solicita-se calcular a aceleração resultante...",
+    "curadoria": "AGENTE_ANTIGRAVITY",
     "tags": ["PSC", "Etapa 1", "Física"]
   }
 ]

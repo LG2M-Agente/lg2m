@@ -35,11 +35,14 @@ Implementado com **Pydantic v2**, o contrato unificado exige consistência de ti
 | `enunciado` | `string` | **Sim** | Comando da questão com equações convertidas para notação KaTeX. |
 | `alternativas` | `dict[str, str]` | **Sim** | Dicionário com chaves normalizadas em maiúsculo (`"A"`, `"B"`, `"C"`, `"D"`, `"E"`). |
 | `gabarito_oficial` | `string` | **Sim** | Letra homologada pela banca (`"A"` a `"E"`) ou `"ANULADA"`. |
-| `distratores_info` | `dict[str, DistratorDetail]` | **Sim** | Mapeamento pedagógico de cada alternativa incorreta (`tipo_pegadinha`, `explicacao`). |
+| `descricao_detalhada` | `string` | **Sim** | Síntese pedagógica de alta densidade semântica para Document Expansion e busca vetorial densa. |
+| `curadoria` | `string` | **Sim** | Estrato de curadoria do registro (`"AGENTE_ANTIGRAVITY"` para 100% da base homologada). |
 | `tem_imagem` | `bool` | **Sim** | Sinalizador booleano indicando presença de figuras/gráficos. |
 | `imagens` | `list[ImagemDetail]` | **Sim** | Lista de metadados das imagens associadas (caminho, bbox, tipo, texto interno). |
 | `possui_formula_matematica` | `bool` | **Sim** | Indica se a questão contém formulações KaTeX que demandam renderizador matemático. |
 | `tags` | `list[str]` | **Sim** | Marcadores conceituais para auxílio na busca e filtragem. |
+
+> **Nota sobre Distratores:** Campos legados de distratores estáticos (`distratores_info`, `tipo_pegadinha`, `explicacao_distrator`) foram descontinuados e removidos da base canônica. A dissecação de alternativas incorretas agora é realizada dinamicamente em tempo de execução pela arquitetura multiagente (`MentorAgent`), garantindo explicações contextuais adaptadas à resposta e à causa do erro do candidato.
 
 ---
 
@@ -49,5 +52,5 @@ Implementado com **Pydantic v2**, o contrato unificado exige consistência de ti
    O campo `gabarito_oficial` rejeita valores nulos ou diferentes de `{"A", "B", "C", "D", "E", "ANULADA"}`.
 2. **Normalização de Alternativas:**  
    Chaves de alternativas minúsculas (`a`, `b`, `c`, `d`, `e`) são automaticamente sanitizadas e convertidas para letras maiúsculas.
-3. **Consistência dos Distratores:**  
-   Para toda alternativa que não coincidir com o gabarito oficial, um registro correspondente em `distratores_info` é obrigatoriamente instanciado para posterior enriquecimento pedagógico.
+3. **Certificação de Curadoria e Document Expansion:**  
+   Todo item do acervo canônico deve conter `descricao_detalhada` obrigatória de alta densidade semântica e chancela de homologação `curadoria = "AGENTE_ANTIGRAVITY"`.

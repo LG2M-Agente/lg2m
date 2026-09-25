@@ -41,8 +41,8 @@ erDiagram
 * **`certames`:** Certames organizados por banca (`id`, `banca_id`, `nome`, `sigla`, `instituicao`, `tipo_certame`, `esfera`).
 * **`disciplinas`:** Matérias do currículo (`id`, `nome`, `area_conhecimento`).
 * **`assuntos`:** Tópicos curriculares específicos (`id`, `disciplina_id`, `nome`).
-* **`questoes`:** Tabela mestra de questões (`id`, `codigo_referencia`, `certame_id`, `assunto_id`, `ano`, `etapa_edicao`, `numero_questao`, `disciplina_nome`, `area_conhecimento`, `topico_especifico`, `texto_base`, `enunciado`, `gabarito_oficial`, `tem_imagem`, `imagens`, `possui_formula_matematica`, `tags`, `embedding_json`).
-* **`alternativas`:** Opções de múltipla escolha A a E (`id`, `questao_id`, `letra`, `texto`, `eh_correta`, `tipo_pegadinha`, `explicacao_distrator`).
+* **`questoes`:** Tabela mestra de questões (`id`, `codigo_referencia`, `certame_id`, `assunto_id`, `ano`, `etapa_edicao`, `numero_questao`, `disciplina_nome`, `area_conhecimento`, `topico_especifico`, `texto_base`, `enunciado`, `gabarito_oficial`, `tem_imagem`, `imagens`, `possui_formula_matematica`, `descricao_detalhada`, `curadoria`, `tags`, `embedding_json`).
+* **`alternativas`:** Opções de múltipla escolha A a E (`id`, `questao_id`, `letra`, `texto`, `eh_correta`). (Nota: a dissecação de distratores é realizada dinamicamente pelo Agente Mentor e não via colunas estáticas).
 
 ### 2.2. Tabelas do Estudante, Cognição e Mentoria
 * **`usuarios`:** Dados de autenticação e plano (`id`, `email`, `nome`, `senha_hash`, `tipo_plano`, `created_at`).
