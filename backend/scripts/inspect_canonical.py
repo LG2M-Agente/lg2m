@@ -30,9 +30,13 @@ def exibir_questao(q: Questao, db):
     assunto_nome = q.assunto_rel.nome if q.assunto_rel else "N/A"
     print(f" Assunto: {assunto_nome}")
     print(f" Tópico: {q.topico_especifico or 'N/A'}")
-    print(f" Dificuldade Estimada: {q.tags[-1] if q.tags and 'dificuldade_' in q.tags[-1] else 'MEDIO'}")
+    print(f" Dificuldade Estimada: {q.tags[-1] if q.tags and 'dificuldade_' in q.tags[-1] else 'MEDIO'}  |  Curadoria: [{q.curadoria or 'MODELO_LOCAL'}]")
     print(f" Fórmulas: {'Sim' if q.possui_formula_matematica else 'Não'}  |  Imagens: {'Sim' if q.tem_imagem else 'Não'}")
     print("-" * 75)
+
+    if q.descricao_detalhada:
+        print("\n[DESCRIÇÃO PEDAGÓGICA EXPANDIDA]:")
+        print(f"  {q.descricao_detalhada}")
 
     if q.texto_base:
         print("\n[TEXTO-BASE]:")

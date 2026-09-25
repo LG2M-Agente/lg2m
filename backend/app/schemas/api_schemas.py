@@ -32,6 +32,8 @@ class QuestionDetailResponse(BaseModel):
     tem_imagem: bool
     imagens: List[Dict[str, Any]] = []
     possui_formula_matematica: bool = False
+    descricao_detalhada: Optional[str] = None
+    curadoria: Optional[str] = "MODELO_LOCAL"
     tags: List[str] = []
 
 

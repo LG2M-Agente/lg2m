@@ -94,6 +94,9 @@ class Questao(Base):
     possui_formula_matematica = Column(Boolean, default=False)
     tags = Column(JSON, default=list)
 
+    descricao_detalhada = Column(Text, nullable=True)
+    curadoria = Column(String(50), default="MODELO_LOCAL", index=True)
+
     # Armazena embedding como lista JSON (ou Vector em pgvector)
     embedding_json = Column(JSON, nullable=True)
 

@@ -112,6 +112,8 @@ def search_questions(req: QuestionSearchRequest, db: Session = Depends(get_db)):
             tem_imagem=q.tem_imagem,
             imagens=q.imagens or [],
             possui_formula_matematica=q.possui_formula_matematica,
+            descricao_detalhada=q.descricao_detalhada,
+            curadoria=q.curadoria,
             tags=q.tags or [],
         ))
 
@@ -141,6 +143,8 @@ def get_question_detail(question_id: str, db: Session = Depends(get_db)):
         tem_imagem=q.tem_imagem,
         imagens=q.imagens or [],
         possui_formula_matematica=q.possui_formula_matematica,
+        descricao_detalhada=q.descricao_detalhada,
+        curadoria=q.curadoria,
         tags=q.tags or [],
     )
 

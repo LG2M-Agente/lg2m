@@ -18,6 +18,8 @@ export interface QuestionDetail {
   tem_imagem: boolean;
   imagens?: any[];
   possui_formula_matematica: boolean;
+  descricao_detalhada?: string | null;
+  curadoria?: string | null;
   tags: string[];
 }
 

@@ -152,6 +152,8 @@ def seed():
                         imagens=q_data.get("imagens", []),
                         possui_formula_matematica=q_data.get("possui_formula_matematica", False),
                         tags=q_data.get("tags", []),
+                        descricao_detalhada=q_data.get("descricao_detalhada"),
+                        curadoria=q_data.get("curadoria", "MODELO_LOCAL"),
                     )
                     db.add(q_obj)
                     total_questoes_inseridas += 1
@@ -181,6 +183,8 @@ def seed():
                     q_existente.enunciado = q_data.get("enunciado", "")
                     q_existente.tags = q_data.get("tags", [])
                     q_existente.possui_formula_matematica = q_data.get("possui_formula_matematica", False)
+                    q_existente.descricao_detalhada = q_data.get("descricao_detalhada")
+                    q_existente.curadoria = q_data.get("curadoria", "MODELO_LOCAL")
                     total_questoes_inseridas += 1
 
                 if idx % batch_size == 0:

@@ -39,8 +39,9 @@ def build_vector_index():
             ids.append(q.id)
             assunto = q.assunto_rel.nome if q.assunto_rel else q.disciplina_nome
             topico = q.topico_especifico or ""
-            # Bloco semântico estruturado para máxima densidade conceitual
-            bloco = f"[{q.disciplina_nome}] [{assunto}] {topico} {q.enunciado[:400]}"
+            # Bloco semântico estruturado para máxima densidade conceitual com Document Expansion
+            desc = q.descricao_detalhada or ""
+            bloco = f"[{q.disciplina_nome}] [{assunto}] {topico} | {desc} | {q.enunciado[:350]}"
             textos_enriquecidos.append(bloco)
 
         print(f"   [OK] {len(textos_enriquecidos)} blocos gerados.")
