@@ -48,7 +48,7 @@ def exibir_questao(q: Questao, db):
     print("\n[ALTERNATIVAS]:")
     alts = db.query(Alternativa).filter_by(questao_id=q.id).order_by(Alternativa.letra).all()
     for alt in alts:
-        correta_tag = " [GABARITO OFICIAL]" if alt.eh_correta else f" (Distrator: {alt.tipo_pegadinha})"
+        correta_tag = " [GABARITO OFICIAL]" if alt.eh_correta else ""
         print(f"  ({alt.letra}) {alt.texto}{correta_tag}")
 
     print("=" * 75 + "\n")

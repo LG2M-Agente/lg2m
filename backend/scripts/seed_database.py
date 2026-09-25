@@ -165,17 +165,13 @@ def seed(clean: bool = False):
 
                     # Alternativas
                     gab = q_data.get("gabarito_oficial", "ANULADA")
-                    distratores_info = q_data.get("distratores_info", {})
                     for letra, texto in q_data.get("alternativas", {}).items():
                         eh_c = (letra == gab)
-                        dist_data = distratores_info.get(letra, {})
                         alt_obj = Alternativa(
                             questao_id=q_id,
                             letra=letra,
                             texto=texto,
                             eh_correta=eh_c,
-                            tipo_pegadinha=dist_data.get("tipo_pegadinha", "DESCONHECIDO"),
-                            explicacao_distrator=dist_data.get("explicacao"),
                         )
                         db.add(alt_obj)
                         total_alternativas_inseridas += 1

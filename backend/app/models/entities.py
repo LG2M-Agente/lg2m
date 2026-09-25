@@ -117,8 +117,6 @@ class Alternativa(Base):
     letra = Column(String(5), nullable=False)  # A, B, C, D, E
     texto = Column(Text, nullable=False)
     eh_correta = Column(Boolean, nullable=False)
-    tipo_pegadinha = Column(String(50), default="DESCONHECIDO")
-    explicacao_distrator = Column(Text, nullable=True)
 
     questao = relationship("Questao", back_populates="alternativas")
 
