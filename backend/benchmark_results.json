@@ -1,0 +1,103 @@
+{
+  "timestamp": "2026-09-24T21:50:02.091097",
+  "total_testes": 5,
+  "taxa_sucesso_flywheel": 100.0,
+  "media_latencia_ms": 23.39,
+  "resultados_detalhados": [
+    {
+      "psc_id": "PSC_2025_E3_FISICA_54",
+      "psc_disciplina": "Física",
+      "psc_assunto": "Física",
+      "irmas_encontradas": 3,
+      "exemplos_irmas": [
+        {
+          "sis_id": "SIS_2016_E1_FISICA_45",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de Física cobrado no SIS."
+        },
+        {
+          "sis_id": "SIS_2017_E1_FISICA_48",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de Física cobrado no SIS."
+        }
+      ],
+      "latencia_ms": 35.89
+    },
+    {
+      "psc_id": "PSC_2025_E3_QUIMICA_42",
+      "psc_disciplina": "Química",
+      "psc_assunto": "Química",
+      "irmas_encontradas": 3,
+      "exemplos_irmas": [
+        {
+          "sis_id": "SIS_2017_E1_QUIMICA_60",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de Química cobrado no SIS."
+        },
+        {
+          "sis_id": "SIS_2016_E1_QUIMICA_55",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de Química cobrado no SIS."
+        }
+      ],
+      "latencia_ms": 19.87
+    },
+    {
+      "psc_id": "PSC_2025_E3_BIOLOGIA_36",
+      "psc_disciplina": "Biologia",
+      "psc_assunto": "Biologia",
+      "irmas_encontradas": 3,
+      "exemplos_irmas": [
+        {
+          "sis_id": "SIS_2014_E1_BIOLOGIA_31",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de Biologia cobrado no SIS."
+        },
+        {
+          "sis_id": "SIS_2013_E1_BIOLOGIA_35",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de Biologia cobrado no SIS."
+        }
+      ],
+      "latencia_ms": 19.53
+    },
+    {
+      "psc_id": "PSC_2025_E2_MATEMATICA_54",
+      "psc_disciplina": "Matemática",
+      "psc_assunto": "Estatística e Probabilidade",
+      "irmas_encontradas": 3,
+      "exemplos_irmas": [
+        {
+          "sis_id": "SIS_2017_E1_MATEMATICA_40",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de Matemática cobrado no SIS."
+        },
+        {
+          "sis_id": "SIS_2016_E1_MATEMATICA_41",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de Matemática cobrado no SIS."
+        }
+      ],
+      "latencia_ms": 21.46
+    },
+    {
+      "psc_id": "PSC_2025_E3_HISTORIA_24",
+      "psc_disciplina": "História",
+      "psc_assunto": "História",
+      "irmas_encontradas": 3,
+      "exemplos_irmas": [
+        {
+          "sis_id": "SIS_2015_E1_HISTORIA_20",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de História cobrado no SIS."
+        },
+        {
+          "sis_id": "SIS_2014_E1_HISTORIA_18",
+          "sis_certame": "SIS",
+          "motivo": "Mesmo princípio estrutural de História cobrado no SIS."
+        }
+      ],
+      "latencia_ms": 20.22
+    }
+  ]
+}

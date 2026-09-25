@@ -1,0 +1,27 @@
+# Dependências e Builds do Frontend Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Python e Bytecodes
+__pycache__/
+*.py[cod]
+*$py.class
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/**/__pycache__/
+backend/tests/__pycache__/
+backend/scripts/__pycache__/
+
+# Variáveis de ambiente secretas
+.env
+.env.local
+.env.*.local
+
+# Logs e arquivos temporários do sistema
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+*.swp

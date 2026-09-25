@@ -1,0 +1,146 @@
+"""
+lg2m/backend/app/api/v1/questions.py
+Endpoints REST para pesquisa semântica, catálogo e recuperação de questões semelhantes.
+"""
+
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+
+from app.core.database import get_db
+from app.models.entities import Questao, Certame, Assunto
+from app.schemas.api_schemas import QuestionSearchRequest, QuestionDetailResponse
+from app.agents.graph import multiagent_engine
+
+router = APIRouter(prefix="/questions", tags=["Questões & Busca Semântica"])
+
+
+@router.get("/search", response_model=List[QuestionDetailResponse])
+def search_questions_get(
+    query: str = Query(..., min_length=2, description="Texto de busca livre"),
+    certame: str = Query(None, description="PSC, SIS ou ALL"),
+    etapa: str = Query(None, description="1, 2, 3"),
+    disciplina: str = Query(None, description="Disciplina"),
+    ano: int = Query(None, description="Ano"),
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db)
+):
+    req = QuestionSearchRequest(
+        query=query, certame=certame, etapa=etapa, disciplina=disciplina, ano=ano, limit=limit
+    )
+    return search_questions(req, db)
+
+
+@router.post("/search", response_model=List[QuestionDetailResponse])
+def search_questions(req: QuestionSearchRequest, db: Session = Depends(get_db)):
+    """
+    Busca semântica híbrida: combina filtros relacionais SQL (certame, etapa, disciplina, ano)
+    com relevância temática em linguagem natural.
+    O gabarito oficial é rigorosamente blindado no backend.
+    """
+    query_builder = db.query(Questao)
+
+    # Filtros relacionais
+    if req.certame and req.certame != "ALL":
+        query_builder = query_builder.join(Questao.certame).filter(Certame.sigla == req.certame)
+
+    if req.etapa:
+        query_builder = query_builder.filter(Questao.etapa_edicao == req.etapa)
+
+    if req.disciplina:
+        query_builder = query_builder.filter(Questao.disciplina_nome.ilike(f"%{req.disciplina}%"))
+
+    if req.ano:
+        query_builder = query_builder.filter(Questao.ano == req.ano)
+
+    # Busca textual por termos-chave da consulta livre
+    termos = [t.strip() for t in req.query.split() if len(t.strip()) >= 3]
+    if termos:
+        condicoes = []
+        for t in termos:
+            condicoes.append(Questao.enunciado.ilike(f"%{t}%"))
+            condicoes.append(Questao.disciplina_nome.ilike(f"%{t}%"))
+            condicoes.append(Questao.topico_especifico.ilike(f"%{t}%"))
+        query_builder = query_builder.filter(or_(*condicoes))
+
+    resultados = query_builder.limit(req.limit).all()
+
+    # Formata resposta sem expor gabarito
+    response_items = []
+    for q in resultados:
+        response_items.append(QuestionDetailResponse(
+            id=q.id,
+            codigo_referencia=q.codigo_referencia,
+            certame=q.certame.sigla if q.certame else "PSC",
+            ano=q.ano,
+            etapa=q.etapa_edicao,
+            numero_questao=q.numero_questao,
+            disciplina=q.disciplina_nome,
+            area_conhecimento=q.area_conhecimento,
+            assunto=q.assunto_rel.nome if q.assunto_rel else q.disciplina_nome,
+            texto_base=q.texto_base,
+            enunciado=q.enunciado,
+            alternativas={a.letra: a.texto for a in q.alternativas},
+            tem_imagem=q.tem_imagem,
+            imagens=q.imagens or [],
+            possui_formula_matematica=q.possui_formula_matematica,
+            tags=q.tags or [],
+        ))
+
+    return response_items
+
+
+@router.get("/{question_id}", response_model=QuestionDetailResponse)
+def get_question_detail(question_id: str, db: Session = Depends(get_db)):
+    """Retorna detalhes da questão sem expor o gabarito antes da resolução."""
+    q = db.query(Questao).filter_by(id=question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Questão não encontrada no acervo oficial.")
+
+    return QuestionDetailResponse(
+        id=q.id,
+        codigo_referencia=q.codigo_referencia,
+        certame=q.certame.sigla if q.certame else "PSC",
+        ano=q.ano,
+        etapa=q.etapa_edicao,
+        numero_questao=q.numero_questao,
+        disciplina=q.disciplina_nome,
+        area_conhecimento=q.area_conhecimento,
+        assunto=q.assunto_rel.nome if q.assunto_rel else q.disciplina_nome,
+        texto_base=q.texto_base,
+        enunciado=q.enunciado,
+        alternativas={a.letra: a.texto for a in q.alternativas},
+        tem_imagem=q.tem_imagem,
+        imagens=q.imagens or [],
+        possui_formula_matematica=q.possui_formula_matematica,
+        tags=q.tags or [],
+    )
+
+
+@router.get("/{question_id}/similar", response_model=List[dict])
+def get_similar_questions(question_id: str, db: Session = Depends(get_db)):
+    """
+    Ativa o Flywheel de Dados Semânticos: localiza itens análogos de outras bancas ou anos
+    que compartilham a mesma estrutura de raciocínio.
+    """
+    q = db.query(Questao).filter_by(id=question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Questão de referência não encontrada.")
+
+    # Aciona o motor multiagente via nó retriever
+    state_input = {
+        "intent_detected": "BUSCAR_SEMELHANTES",
+        "current_question_id": q.id,
+        "current_question_data": {
+            "id": q.id,
+            "disciplina": q.disciplina_nome,
+            "assunto": q.assunto_rel.nome if q.assunto_rel else q.disciplina_nome,
+            "certame": {"sigla": q.certame.sigla if q.certame else "PSC"},
+            "enunciado": q.enunciado,
+        },
+        "messages": [],
+    }
+
+    result = multiagent_engine.invoke(state_input)
+    return result.get("similar_questions_found", [])
