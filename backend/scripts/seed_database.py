@@ -26,12 +26,17 @@ from app.models.entities import (
 )
 
 
-def seed():
+def seed(clean: bool = False):
     print("=" * 70)
     print("  INICIALIZAÇÃO E SEED DO BANCO DE DADOS LG2M")
     print("=" * 70)
 
     # 1. Cria todas as tabelas
+    if clean:
+        print("\n1. Limpando tabelas existentes (clean mode)...")
+        Base.metadata.drop_all(bind=engine)
+        print("   [OK] Tabelas antigas removidas!")
+
     print("\n1. Criando tabelas no banco de dados...")
     Base.metadata.create_all(bind=engine)
     print("   [OK] Tabelas criadas com sucesso!")
@@ -233,4 +238,5 @@ def seed():
 
 
 if __name__ == "__main__":
-    seed()
+    clean_flag = "--clean" in sys.argv
+    seed(clean=clean_flag)
