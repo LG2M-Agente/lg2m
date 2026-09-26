@@ -27,19 +27,39 @@ A **LG2M** é uma plataforma agêntica de preparação inteligente voltada para 
 
 ## 🚀 Como Executar
 
-### 1. Backend
+### 1. Instalação das Dependências
+
+#### Backend (Python 3.11+)
 ```bash
 cd lg2m/backend
-/home/marcos/Projetos/LG2M/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# Configure sua GEMINI_API_KEY no arquivo .env
 ```
-Acesse a documentação interativa em: `http://localhost:8000/docs`
 
-### 2. Frontend
+#### Frontend (Node.js 18+)
+```bash
+cd lg2m/frontend
+npm install
+```
+
+### 2. Inicialização dos Serviços
+
+#### Iniciar o Backend
+```bash
+cd lg2m/backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+Acesse a documentação interativa em: [`http://localhost:8000/docs`](http://localhost:8000/docs)
+
+#### Iniciar o Frontend
 ```bash
 cd lg2m/frontend
 npm run dev
 ```
-Acesse a aplicação web em: `http://localhost:3000`
+Acesse a aplicação web em: [`http://localhost:3000`](http://localhost:3000)
 
 ---
 

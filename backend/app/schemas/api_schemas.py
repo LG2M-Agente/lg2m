@@ -53,6 +53,8 @@ class QuestionAttemptResponse(BaseModel):
     causa_erro: Optional[str] = None
     novo_score_assunto: Optional[float] = None
     ponto_cego_detectado: bool = False
+    cognitive_snapshot: Optional[Dict[str, Any]] = None
+    identified_misconceptions: Optional[List[str]] = None
 
 
 class MentorChatRequest(BaseModel):
@@ -99,6 +101,7 @@ class StudentProfileResponse(BaseModel):
     pontos_cegos_count: int
     tempo_medio_segundos: float
     dossie_cognitivo_markdown: Optional[str] = None
+    perfil_cognitivo_json: Optional[Dict[str, Any]] = None
     versao_perfil: int = 1
 
 

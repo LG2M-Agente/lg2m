@@ -8,9 +8,30 @@
 
 ## 1. Pré-Requisitos do Ambiente
 
-- **Python:** 3.11+ (testado no Python 3.14).
-- **Node.js:** 18+ (testado no Node.js v24.20 / npm 11.19).
-- **Virtualenv Python:** Localizado em `/home/marcos/Projetos/LG2M/.venv`.
+- **Python:** 3.11+ (compatível com 3.11, 3.12, 3.13 e 3.14).
+- **Node.js:** 18+ (testado no Node.js v20+ / v24 e npm 10+).
+
+### Instalação das Dependências (Para novos usuários / avaliadores)
+
+1. **Backend (Python):**
+```bash
+# Na raiz do projeto ou em lg2m/backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r lg2m/backend/requirements.txt
+```
+
+2. **Frontend (Node.js):**
+```bash
+cd lg2m/frontend
+npm install
+```
+
+3. **Variáveis de Ambiente:**
+```bash
+cp lg2m/backend/.env.example lg2m/backend/.env
+# Edite o arquivo .env e configure sua chave GEMINI_API_KEY
+```
 
 ---
 
@@ -18,10 +39,10 @@
 
 ### Passo 1: Iniciar o Servidor Backend (FastAPI + LangGraph)
 
-Em um terminal, execute:
+Em um terminal com o ambiente ativado:
 ```bash
-cd /home/marcos/Projetos/LG2M/lg2m/backend
-/home/marcos/Projetos/LG2M/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+cd lg2m/backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 - **Swagger Interativo:** Acesse [`http://localhost:8000/docs`](http://localhost:8000/docs)

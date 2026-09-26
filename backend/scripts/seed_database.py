@@ -218,6 +218,118 @@ def seed(clean: bool = False):
             print(f"   [OK] Usuário Lucas Eduardo criado com sucesso! (ID: {usuario_demo.id})")
         else:
             print("   [OK] Usuário Lucas Eduardo já existente.")
+            perfil_demo = db.query(PerfilEstudante).filter_by(usuario_id=usuario_demo.id).first()
+
+        # 6. Popula Histórico Cognitivo Rico para Demonstração (Heatmap & Vícios)
+        if perfil_demo:
+            from app.services.cognitive_engine import CognitiveProfileEngine
+            from app.models.entities import TentativaQuestao, RegistroDificuldade
+
+            print("\n6. Populando Histórico Cognitivo e Dossiê Epistêmico Piloto...")
+            # Limpa tentativas antigas se existirem
+            db.query(TentativaQuestao).filter_by(perfil_id=perfil_demo.id).delete()
+            db.query(RegistroDificuldade).filter_by(perfil_id=perfil_demo.id).delete()
+            db.commit()
+
+            # Busca questões de tópicos-chave para simular o histórico
+            questoes_amostra = db.query(Questao).limit(100).all()
+            q_por_disc = {}
+            for q in questoes_amostra:
+                q_por_disc.setdefault(q.disciplina_nome, []).append(q)
+
+            current_p_json = CognitiveProfileEngine.init_empty_profile("Lucas Eduardo", "PSC")
+
+            # Cenários de aprendizado realistas:
+            cenarios = [
+                # Português: Alta proficiência (85%)
+                ("Língua Portuguesa", True, 3),
+                ("Língua Portuguesa", False, 1),
+                ("Língua Portuguesa", True, 2),
+                # História: Alta proficiência (80%)
+                ("História", True, 4),
+                ("História", False, 1),
+                # Biologia: Intermediário (60%)
+                ("Biologia", True, 3),
+                ("Biologia", False, 2),
+                # Química: Atenção (50%)
+                ("Química", True, 2),
+                ("Química", False, 2),
+                # Física: Ponto Cego Crítico (25% com armadilha de unidades)
+                ("Física", False, 3),
+                ("Física", True, 1),
+                ("Física", False, 2),
+                # Matemática: Ponto Cego Crítico (30%)
+                ("Matemática", False, 3),
+                ("Matemática", True, 1),
+                ("Matemática", False, 1),
+            ]
+
+            for disc, acertou, repeticoes in cenarios:
+                cand_list = q_por_disc.get(disc, [])
+                for _ in range(repeticoes):
+                    if cand_list:
+                        q_sel = cand_list.pop(0) if len(cand_list) > 1 else cand_list[0]
+                        gab = q_sel.gabarito_oficial or "A"
+                        alt_marcada = gab if acertou else ("B" if gab != "B" else "C")
+                        q_data = {
+                            "id": q_sel.id,
+                            "disciplina": q_sel.disciplina_nome,
+                            "assunto": q_sel.assunto_rel.nome if q_sel.assunto_rel else q_sel.disciplina_nome,
+                            "assunto_id": q_sel.assunto_id,
+                            "certame": q_sel.certame.sigla if q_sel.certame else "PSC",
+                            "enunciado": q_sel.enunciado,
+                            "gabarito_oficial": gab,
+                        }
+
+                        current_p_json, dossie_md, is_blind, vicios = CognitiveProfileEngine.update_profile_step(
+                            current_profile=current_p_json,
+                            question_data=q_data,
+                            selected_alt=alt_marcada,
+                            is_correct=acertou,
+                            timing_seconds=42,
+                            student_name="Lucas Eduardo",
+                            certame_foco="PSC"
+                        )
+
+                        # Registra tentativa individual
+                        t = TentativaQuestao(
+                            perfil_id=perfil_demo.id,
+                            questao_id=q_sel.id,
+                            alternativa_marcada=alt_marcada,
+                            acertou=acertou,
+                            tempo_gasto_segundos=42,
+                            causa_erro="CONCEITUAL" if not acertou else None
+                        )
+                        db.add(t)
+
+            # Persiste perfil atualizado com registros relacionais
+            perfil_demo.perfil_cognitivo_json = current_p_json
+            perfil_demo.dossie_cognitivo_markdown = dossie_md
+            perfil_demo.versao_perfil = current_p_json.get("versao_epistemica", 25)
+            db.commit()
+
+            # Cria registros em RegistroDificuldade para todos os tópicos no perfil
+            for nome_topico, info in current_p_json.get("topicos", {}).items():
+                assunto_db = db.query(Assunto).filter_by(nome=nome_topico).first()
+                if not assunto_db:
+                    disc_db = db.query(Disciplina).filter_by(nome=info.get("disciplina", "Gerais")).first()
+                    if disc_db:
+                        assunto_db = Assunto(disciplina_id=disc_db.id, nome=nome_topico)
+                        db.add(assunto_db)
+                        db.flush()
+
+                if assunto_db:
+                    reg = RegistroDificuldade(
+                        perfil_id=perfil_demo.id,
+                        assunto_id=assunto_db.id,
+                        total_tentativas=info["total_tentativas"],
+                        total_erros=info["total_erros"],
+                        indice_dominio=info["score_dominio"]
+                    )
+                    db.add(reg)
+
+            db.commit()
+            print(f"   [OK] Perfil cognitivo e Heatmap populados com {current_p_json['total_tentativas']} tentativas e {len(current_p_json.get('topicos', {}))} tópicos!")
 
         print("\n" + "=" * 70)
         print("  BANCO DE DADOS PERSISTIDO E PRONTO COM SUCESSO!")

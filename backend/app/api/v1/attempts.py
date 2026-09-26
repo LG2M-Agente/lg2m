@@ -73,4 +73,6 @@ def submit_question_attempt(
         causa_erro=result.get("error_classification"),
         novo_score_assunto=result.get("subject_score_updated"),
         ponto_cego_detectado=result.get("critical_blindspot_detected", False),
+        cognitive_snapshot=result.get("cognitive_profile_summary"),
+        identified_misconceptions=result.get("identified_misconceptions"),
     )

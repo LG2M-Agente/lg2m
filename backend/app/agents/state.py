@@ -39,6 +39,10 @@ class AgentState(TypedDict, total=False):
     # Histórico de Conversação (Short-Term Memory)
     messages: List[Dict[str, str]]
 
-    # Atualizações Cognitivas (Profiler)
+    # Atualizações Cognitivas e Memória Temporal de Longo Prazo (Profiler Pt)
+    cognitive_profile_summary: Optional[Dict[str, Any]]
+    identified_misconceptions: Optional[List[str]]
+    didactic_guidance: Optional[str]
     subject_score_updated: Optional[float]
     critical_blindspot_detected: Optional[bool]
+    profile_version: Optional[int]

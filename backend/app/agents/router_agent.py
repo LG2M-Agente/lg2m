@@ -37,32 +37,42 @@ def router_node(state: AgentState) -> Dict[str, Any]:
         }
 
     msg_lower = user_msg.lower()
-
-    # Intenção de simulado
+    intent = "BUSCAR_QUESTAO"
     if any(w in msg_lower for w in ["simulado", "montar prova", "gerar caderno", "treino cronometrado"]):
-        return {
-            "intent_detected": "MONTAR_SIMULADO"
-        }
+        intent = "MONTAR_SIMULADO"
+    elif any(w in msg_lower for w in ["buscar", "procurar", "questões sobre", "questoes sobre", "questão de", "exercício de", "me mostre questões"]):
+        intent = "BUSCAR_QUESTAO"
+    elif any(w in msg_lower for w in ["semelhante", "parecida", "mesmo conceito", "outra banca", "reforço"]):
+        intent = "BUSCAR_SEMELHANTES"
+    elif current_q is not None and user_msg:
+        intent = "DUVIDA_CHAT"
 
-    # Intenção de busca semântica de questões
-    if any(w in msg_lower for w in ["buscar", "procurar", "questões sobre", "questoes sobre", "questão de", "exercício de", "me mostre questões"]):
-        return {
-            "intent_detected": "BUSCAR_QUESTAO"
-        }
+    # Carrega snapshot cognitivo compacto se houver questão ativa
+    cognitive_snapshot = state.get("cognitive_profile_summary")
+    if not cognitive_snapshot and current_q:
+        from app.core.database import SessionLocal
+        from app.models.entities import PerfilEstudante
+        from app.services.cognitive_engine import CognitiveProfileEngine
+        
+        db = SessionLocal()
+        try:
+            p_id = state.get("perfil_id")
+            perfil = db.query(PerfilEstudante).filter_by(id=p_id).first() if p_id else db.query(PerfilEstudante).first()
+            if perfil:
+                cognitive_snapshot = CognitiveProfileEngine.get_active_cognitive_snapshot(
+                    profile=perfil.perfil_cognitivo_json or {},
+                    question_data=current_q,
+                    estilo_didatico=state.get("estilo_didatico", "SOCRATICO")
+                )
+        except Exception as e:
+            print(f"[Router Cognitive Snapshot Error]: {e}")
+        finally:
+            db.close()
 
-    # Intenção de busca de semelhantes do conceito ativo
-    if any(w in msg_lower for w in ["semelhante", "parecida", "mesmo conceito", "outra banca", "reforço"]):
-        return {
-            "intent_detected": "BUSCAR_SEMELHANTES"
-        }
+    result_payload: Dict[str, Any] = {"intent_detected": intent}
+    if cognitive_snapshot:
+        result_payload["cognitive_profile_summary"] = cognitive_snapshot
+        result_payload["identified_misconceptions"] = cognitive_snapshot.get("vicios_cognitivos_relevantes", [])
+        result_payload["didactic_guidance"] = cognitive_snapshot.get("diretriz_pedagogica")
 
-    # Dúvida conversacional sobre a questão ativa
-    if current_q is not None and user_msg:
-        return {
-            "intent_detected": "DUVIDA_CHAT"
-        }
-
-    # Default
-    return {
-        "intent_detected": "BUSCAR_QUESTAO"
-    }
+    return result_payload

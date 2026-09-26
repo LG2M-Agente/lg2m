@@ -90,6 +90,7 @@ def get_student_profile(
         pontos_cegos_count=pontos_cegos_count,
         tempo_medio_segundos=round(tempo_medio, 1),
         dossie_cognitivo_markdown=perfil.dossie_cognitivo_markdown,
+        perfil_cognitivo_json=perfil.perfil_cognitivo_json,
         versao_perfil=perfil.versao_perfil or 1
     )
 

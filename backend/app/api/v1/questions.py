@@ -3,8 +3,10 @@ lg2m/backend/app/api/v1/questions.py
 Endpoints REST para pesquisa semântica, catálogo e recuperação de questões semelhantes.
 """
 
+import os
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
@@ -13,6 +15,7 @@ from app.models.entities import Questao, Certame, Assunto
 from app.schemas.api_schemas import QuestionSearchRequest, QuestionDetailResponse
 from app.agents.graph import multiagent_engine
 from app.services.vector_search import vector_search_service
+from app.services.image_resolver import ImageResolver
 
 router = APIRouter(prefix="/questions", tags=["Questões & Busca Semântica"])
 
@@ -175,3 +178,26 @@ def get_similar_questions(question_id: str, db: Session = Depends(get_db)):
 
     result = multiagent_engine.invoke(state_input)
     return result.get("similar_questions_found", [])
+
+
+@router.get("/{question_id}/image", response_class=FileResponse)
+def get_question_image(question_id: str, img_index: int = 0, db: Session = Depends(get_db)):
+    """
+    Retorna o arquivo de figura/gráfico original da questão em formato PNG.
+    """
+    q = db.query(Questao).filter_by(id=question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Questão não encontrada.")
+
+    img_path = ImageResolver.resolve_image(
+        question_id=q.id,
+        numero_questao=q.numero_questao,
+        ano=q.ano,
+        imagens_data=q.imagens,
+        img_index=img_index
+    )
+    if not img_path or not os.path.exists(img_path):
+        raise HTTPException(status_code=404, detail="Imagem não encontrada no acervo para este item.")
+
+    return FileResponse(img_path, media_type="image/png")
+

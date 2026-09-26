@@ -32,6 +32,8 @@ export interface QuestionAttemptResult {
   causa_erro?: string | null;
   novo_score_assunto?: number | null;
   ponto_cego_detectado: boolean;
+  cognitive_snapshot?: any;
+  identified_misconceptions?: string[];
 }
 
 export interface HeatmapItem {
@@ -57,6 +59,7 @@ export interface StudentProfile {
   pontos_cegos_count: number;
   tempo_medio_segundos: number;
   dossie_cognitivo_markdown?: string | null;
+  perfil_cognitivo_json?: any;
   versao_perfil?: number;
 }
 

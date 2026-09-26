@@ -144,6 +144,7 @@ class PerfilEstudante(Base):
 
     # Dossiê Epistêmico & Memória de Longo Prazo gerada e atualizada pelo Profiler Agent
     dossie_cognitivo_markdown = Column(Text, nullable=True)
+    perfil_cognitivo_json = Column(JSON, default=dict)
     versao_perfil = Column(Integer, default=1)
 
     created_at = Column(DateTime, default=datetime.utcnow)

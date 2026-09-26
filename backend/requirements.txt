@@ -1,0 +1,29 @@
+# LG2M Backend — Dependências do Ecossistema Agêntico (AKCIT Camp 2026)
+# Instalação: pip install -r requirements.txt
+
+# Web Framework & Servidor ASGI
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+python-multipart>=0.0.9
+
+# Validação de Dados & Configurações
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.0
+
+# Banco de Dados & ORM (Suporte a SQLite e PostgreSQL)
+SQLAlchemy>=2.0.0
+
+# Orquestração Multiagente & Grafos Epistêmicos
+langgraph>=0.2.0
+langchain-core>=0.3.0
+
+# Busca Semântica Densa & Embeddings Locais (Execução rápida em CPU)
+fastembed>=0.3.0
+numpy>=1.26.0
+
+# Cliente HTTP Resiliente (Google Gemini, Groq, OpenAI)
+httpx>=0.27.0
+
+# Testes de Integração & Benchmarks
+pytest>=8.0.0

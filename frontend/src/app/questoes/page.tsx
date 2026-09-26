@@ -15,7 +15,9 @@ import {
   Lightbulb,
   Layers,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Brain,
+  ImageIcon
 } from "lucide-react";
 import {
   searchQuestions,
@@ -298,6 +300,31 @@ export default function QuestoesPage() {
                 <MathRenderer content={selectedQuestao.enunciado} />
               </div>
 
+              {/* Figura de Apoio Original da Prova */}
+              {selectedQuestao.tem_imagem && (
+                <div className="mb-6 p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-amber-400 font-medium">
+                    <ImageIcon className="w-4 h-4 shrink-0" />
+                    <span>Figura / Gráfico original da banca ({selectedQuestao.certame})</span>
+                  </div>
+                  <div className="flex justify-center bg-white/95 p-3 rounded-lg overflow-hidden max-h-80 shadow-inner">
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/questions/${selectedQuestao.id}/image`}
+                      alt={`Figura da questão ${selectedQuestao.numero_questao}`}
+                      className="max-h-72 object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLElement;
+                        target.style.display = "none";
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = "<p class='text-slate-500 text-xs py-2'>Consulte o caderno de prova oficial para visualização em alta resolução.</p>";
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Alternativas de A a E */}
               <div className="space-y-3 mb-6">
                 {Object.entries(selectedQuestao.alternativas).map(([letra, texto]) => {
@@ -380,6 +407,13 @@ export default function QuestoesPage() {
                       <p className="text-xs mt-1 text-slate-300 leading-relaxed">
                         {attemptResult.explicacao_mentor}
                       </p>
+
+                      {attemptResult.cognitive_snapshot?.vicios_cognitivos_relevantes?.length > 0 && (
+                        <div className="mt-3 text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                          <Brain className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <span>Padrão mapeado no Perfil Cognitivo: <strong>{attemptResult.cognitive_snapshot.vicios_cognitivos_relevantes[0]}</strong></span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -429,6 +463,21 @@ export default function QuestoesPage() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Contexto do Perfil Cognitivo Pt */}
+                  {attemptResult?.cognitive_snapshot && (
+                    <div className="p-2.5 rounded-xl bg-blue-950/40 border border-blue-900/40 text-[11px] text-slate-300 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Brain className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                        <span>
+                          Retenção em {attemptResult.cognitive_snapshot.topico_ativo}: <strong>{attemptResult.cognitive_snapshot.dominio_no_topico}%</strong> ({attemptResult.cognitive_snapshot.status_topico})
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                        Pt v{attemptResult.cognitive_snapshot.versao_perfil}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Histórico do Chat */}
                   <div className="space-y-3 max-h-64 overflow-y-auto pr-1">

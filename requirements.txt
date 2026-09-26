@@ -1,0 +1,3 @@
+# LG2M — Ecossistema Agêntico Seriado (PSC/UFAM & SIS/UEA)
+# Dependências do Backend:
+-r backend/requirements.txt

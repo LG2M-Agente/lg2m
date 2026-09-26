@@ -1,10 +1,12 @@
 """
 lg2m/backend/app/agents/profiler_agent.py
-Agente 4 — Profiler Cognitivo & Gestor de Dificuldades.
+Agente 4 — Profiler Cognitivo & Gestor de Dificuldades (Pt+1 = g(Pt, Tentativa_t)).
+
 Guardião da memória evolutiva de longo prazo:
 1. Atualiza registros de dificuldade e médias ponderadas de domínio curricular.
-2. Analisa baterias completas de exames e gera diagnósticos reflexivos.
-3. Constrói e atualiza o Dossiê Cognitivo vivo do estudante (Markdown) entre sessões.
+2. Identifica e cataloga vícios conceituais e padrões de distratores recorrentes.
+3. Constrói e atualiza o Dossiê Cognitivo vivo do estudante (JSON estruturado + Markdown sintético).
+4. Fornece diagnósticos reflexivos para baterias completas de exames (Simulados).
 """
 
 from datetime import datetime
@@ -21,33 +23,15 @@ from app.models.entities import (
     Simulado,
     Questao,
 )
-
-
-def _formatar_dossie_inicial(perfil: PerfilEstudante) -> str:
-    """Gera a estrutura inicial do Dossiê Cognitivo para o estudante."""
-    nome = perfil.usuario.nome if perfil.usuario else "Estudante"
-    return f"""# Dossiê Cognitivo & Memória Epistêmica — {nome}
-**Certame-Alvo:** {perfil.certame_foco} | **Estilo Didático:** {perfil.estilo_didatico_padrao}
-**Data de Abertura:** {datetime.utcnow().strftime('%d/%m/%Y')} | **Versão:** 1
-
----
-
-## 1. Síntese do Modelo Mental
-Estudante em fase de calibração ativa de conhecimentos para o vestibular seriado {perfil.certame_foco}. 
-Acompanhamento contínuo de taxas de retenção, modelos mentais e identificação de vícios conceituais.
-
-## 2. Mapa Dinâmico de Pontos Cegos e Fragilidades
-*Nenhum ponto cego crítico consolidado até o momento. Conclua mais baterias de questões para refinar o diagnóstico.*
-
-## 3. Linha do Tempo e Diário de Baterias Realizadas
-"""
+from app.services.cognitive_engine import CognitiveProfileEngine
 
 
 def profiler_node(state: AgentState) -> Dict[str, Any]:
     """
     Nó do Profiler no LangGraph:
-    Registra a tentativa individual, recalcula o score ponderado de domínio do assunto
-    e atualiza a memória de longo prazo no dossiê cognitivo do estudante.
+    Executa a função de transição Pt+1 = g(Pt, Tentativa_t).
+    Registra a tentativa individual, recalcula o score de domínio do assunto,
+    cataloga vícios cognitivos e atualiza a memória de longo prazo.
     """
     db = SessionLocal()
     try:
@@ -71,7 +55,9 @@ def profiler_node(state: AgentState) -> Dict[str, Any]:
         if not perfil:
             return {"subject_score_updated": None}
 
-        # 1. Registra a tentativa individual
+        nome_aluno = perfil.usuario.nome if perfil.usuario else "Estudante"
+
+        # 1. Registra a tentativa individual no banco relacional
         tentativa = TentativaQuestao(
             perfil_id=perfil_id,
             questao_id=q_id,
@@ -83,17 +69,26 @@ def profiler_node(state: AgentState) -> Dict[str, Any]:
         db.add(tentativa)
         db.flush()
 
-        # 2. Localiza o Assunto da questão
+        # 2. Executa a transição formal de estado Pt+1 = g(Pt, Tentativa_t)
+        profile_json, dossie_md, ponto_cego, vicios_novos = CognitiveProfileEngine.update_profile_step(
+            current_profile=perfil.perfil_cognitivo_json or {},
+            question_data=current_q,
+            selected_alt=selected_alt,
+            is_correct=is_acerto,
+            timing_seconds=tempo_gasto,
+            student_name=nome_aluno,
+            certame_foco=perfil.certame_foco or "PSC"
+        )
+
+        # 3. Atualiza registro relacional RegistroDificuldade para consultas SQL rápidas
         assunto_id = current_q.get("assunto_id")
         assunto_nome = current_q.get("assunto", "Geral")
-        disc_nome = current_q.get("disciplina", "Geral")
 
         if not assunto_id:
             assunto_obj = db.query(Assunto).filter_by(nome=assunto_nome).first()
             assunto_id = assunto_obj.id if assunto_obj else None
 
         novo_score = 100.0 if is_acerto else 0.0
-        ponto_cego = False
 
         if assunto_id:
             reg = db.query(RegistroDificuldade).filter_by(
@@ -115,43 +110,38 @@ def profiler_node(state: AgentState) -> Dict[str, Any]:
                 if not is_acerto:
                     reg.total_erros += 1
 
-                # Média ponderada de acertos
                 acertos = reg.total_tentativas - reg.total_erros
                 reg.indice_dominio = round((acertos / reg.total_tentativas) * 100.0, 1)
 
-            db.commit()
             novo_score = reg.indice_dominio
-            ponto_cego = (novo_score < 50.0 and reg.total_tentativas >= 2)
 
-        # 3. Atualização Reflexiva do Dossiê Cognitivo (Memória Viva)
-        dossie = perfil.dossie_cognitivo_markdown or _formatar_dossie_inicial(perfil)
-        timestamp = datetime.utcnow().strftime("%d/%m/%Y %H:%M")
-
-        status_str = "ACERTO" if is_acerto else f"ERRO ({causa})"
-        nota_tentativa = f"\n- **[{timestamp}]** Questão `{q_id}` ({disc_nome} - *{assunto_nome}*): Resultado: **{status_str}**. "
-        if not is_acerto:
-            nota_tentativa += f"Marcou ({selected_alt}). Gabarito era ({current_q.get('gabarito_oficial')}). Requer atenção no tema."
-        else:
-            nota_tentativa += f"Raciocínio correto demonstrado no conceito."
-
-        # Mantém dossiê compacto limitando logs muito extensos
-        if len(dossie) > 4000:
-            linhas = dossie.split("\n")
-            dossie = "\n".join(linhas[:40]) + "\n\n*(registros anteriores consolidados)*\n"
-
-        perfil.dossie_cognitivo_markdown = dossie + nota_tentativa
-        perfil.versao_perfil = (perfil.versao_perfil or 1) + 1
+        # 4. Persiste o Perfil Cognitivo Temporal Pt+1 no banco
+        perfil.perfil_cognitivo_json = profile_json
+        perfil.dossie_cognitivo_markdown = dossie_md
+        perfil.versao_perfil = profile_json.get("versao_epistemica", (perfil.versao_perfil or 1) + 1)
         db.commit()
+
+        # 5. Snapshot cognitivo atualizado pós-resolução
+        snapshot_atualizado = CognitiveProfileEngine.get_active_cognitive_snapshot(
+            profile=profile_json,
+            question_data=current_q,
+            estilo_didatico=state.get("estilo_didatico", "SOCRATICO")
+        )
 
         return {
             "subject_score_updated": novo_score,
             "critical_blindspot_detected": ponto_cego,
             "profile_version": perfil.versao_perfil,
+            "cognitive_profile_summary": snapshot_atualizado,
+            "identified_misconceptions": vicios_novos,
+            "didactic_guidance": snapshot_atualizado.get("diretriz_pedagogica"),
         }
 
     except Exception as e:
         db.rollback()
         print(f"[ERRO NO PROFILER]: {e}")
+        import traceback
+        traceback.print_exc()
         return {"subject_score_updated": None}
     finally:
         db.close()
@@ -232,12 +222,12 @@ def diagnose_simulado_battery(simulado_id: str, db: Session) -> str:
 
     diagnostico_final = "\n".join(diagnostico_linhas)
 
-    # 4. Salva diagnóstico no simulado
+    # Salva diagnóstico no simulado
     sim.diagnostico_profiler = diagnostico_final
 
-    # 5. Atualiza o Dossiê Cognitivo vivo do estudante
+    # Atualiza o Dossiê Cognitivo vivo do estudante
     if perfil:
-        dossie = perfil.dossie_cognitivo_markdown or _formatar_dossie_inicial(perfil)
+        dossie = perfil.dossie_cognitivo_markdown or ""
         timestamp = datetime.utcnow().strftime("%d/%m/%Y")
         nova_sessao = f"\n\n### [Bateria #{sim.id[:8]}] - {timestamp} ({sim.certame_sigla} {sim.etapa})\n{diagnostico_final}\n"
 
