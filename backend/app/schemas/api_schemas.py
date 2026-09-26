@@ -62,6 +62,10 @@ class MentorChatRequest(BaseModel):
     mensagem: str
     estilo_didatico: str = Field("DIRETO", description="DIRETO, SOCRATICO ou TEORICO")
     perfil_id: Optional[str] = None
+    historico: Optional[List[Dict[str, str]]] = Field(
+        default_factory=list,
+        description="Histórico de mensagens da conversa [{role: 'user'|'mentor', content: '...'}]"
+    )
 
 
 class SimuladoCreateRequest(BaseModel):

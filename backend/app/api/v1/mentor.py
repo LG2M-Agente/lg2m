@@ -29,6 +29,15 @@ def chat_with_mentor(req: MentorChatRequest, db: Session = Depends(get_db)):
     if not q:
         raise HTTPException(status_code=404, detail="Questão não encontrada.")
 
+    hist_messages = []
+    if req.historico:
+        for item in req.historico:
+            r = item.get("role") or "user"
+            c = item.get("content") or item.get("text") or ""
+            if c:
+                hist_messages.append({"role": r, "content": c})
+    hist_messages.append({"role": "user", "content": req.mensagem})
+
     state_input = {
         "user_input_message": req.mensagem,
         "intent_detected": "DUVIDA_CHAT",
@@ -44,7 +53,7 @@ def chat_with_mentor(req: MentorChatRequest, db: Session = Depends(get_db)):
         },
         "estilo_didatico": req.estilo_didatico.upper(),
         "verification_attempts": 0,
-        "messages": [{"role": "user", "content": req.mensagem}],
+        "messages": hist_messages,
     }
 
     tracer.emit_graph_start(

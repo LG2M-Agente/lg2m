@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { fetchStudentProfile, updateStudentProfile } from "../../lib/api";
 import { StudentProfile } from "../../lib/types";
+import { MathRenderer } from "../../components/MathRenderer";
 
 export default function PerfilPage() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -66,7 +67,7 @@ export default function PerfilPage() {
         </div>
         <div className="flex-1 text-center sm:text-left">
           <h2 className="text-lg font-bold text-white">{profile?.nome || "Lucas Eduardo"}</h2>
-          <p className="text-xs text-slate-400">{profile?.email || "estudante.demo@lg2m.edu.br"}</p>
+          <p className="text-xs text-slate-400">{profile?.email || "estudante.demo@cognitio.ia"}</p>
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
             <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-blue-600/20 border border-blue-500/30 text-blue-300 font-semibold">
               Plano Hackathon AKCIT
@@ -212,9 +213,13 @@ export default function PerfilPage() {
         <p className="text-xs text-slate-400">
           Este dossiê reflete a memória epistêmica de longo prazo que o Agente Profiler atualiza a cada bateria de questões respondidas.
         </p>
-        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 text-slate-300 font-mono text-xs whitespace-pre-wrap leading-relaxed max-h-80 overflow-y-auto">
-          {profile?.dossie_cognitivo_markdown || (
-            "Dossiê em fase de calibração inicial. Responda a questões ou simulados para que o Profiler registre seus padrões cognitivos."
+        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 text-slate-300 text-xs leading-relaxed max-h-96 overflow-y-auto">
+          {profile?.dossie_cognitivo_markdown ? (
+            <MathRenderer content={profile.dossie_cognitivo_markdown} />
+          ) : (
+            <span className="text-slate-500 font-mono">
+              Dossiê em fase de calibração inicial. Responda a questões ou simulados para que o Profiler registre seus padrões cognitivos.
+            </span>
           )}
         </div>
       </div>

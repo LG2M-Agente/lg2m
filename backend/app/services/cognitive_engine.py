@@ -344,26 +344,20 @@ class CognitiveProfileEngine:
         estilo = estilo.upper()
 
         if estilo == "SOCRATICO":
-            if status == "PONTO_CEGO_CRITICO":
-                return (
-                    f"ALERTA DE PONTO CEGO: O aluno tem histórico de vulnerabilidade em '{assunto}' "
-                    f"com incidência de '{vicio_destaque}'. Não revele a resposta. "
-                    f"Formule UMA pergunta reflexiva que o force a perceber a inconsistência antes de calcular."
-                )
-            else:
-                return (
-                    f"Conduza a reflexão confrontando a alternativa marcada com o comando da banca. "
-                    f"Instigue o estudante a justificar por que o distrator que escolheu viola a premissa."
-                )
+            return (
+                f"Conduza a explicação com acolhimento e didática, guiando o aluno passo a passo pela linha de raciocínio de '{assunto}'. "
+                f"Mostre com clareza a conexão entre o enunciado e a conclusão, desfazendo com gentileza qualquer armadilha relacionada a '{vicio_destaque}'. "
+                f"Priorize explicar em vez de apenas fazer perguntas."
+            )
         elif estilo == "DIRETO":
             return (
-                f"Foco pragmático em prova de vestibular. Aponte o erro em menos de 100 palavras. "
-                f"Se relevante, dê o macete imediato para contornar '{vicio_destaque}'."
+                f"Explicação direta, clara e prática em formato passo a passo, sem rodeios e sem jargões difíceis. "
+                f"Apresente como resolver a questão com segurança e dê uma dica prática para evitar pegadinhas como '{vicio_destaque}'."
             )
         else:  # TEORICO
             return (
-                f"Fundamentação conceitual formal passo a passo. Demonstre a alternativa correta "
-                f"a partir dos axiomas da disciplina e desmonte formalmente o distrator marcado."
+                f"Explicação aprofundada, completa e didática passo a passo. "
+                f"Explique os conceitos teóricos de '{assunto}' de forma simples e intuitiva, demonstrando a resolução em detalhes."
             )
 
     @classmethod

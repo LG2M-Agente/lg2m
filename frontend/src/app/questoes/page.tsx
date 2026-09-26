@@ -125,6 +125,13 @@ export default function QuestoesPage() {
     if (!selectedQuestao || !inputChat.trim() || loadingChat) return;
     const userText = inputChat.trim();
     setInputChat("");
+
+    // Constrói o histórico da conversa prévia para enviar ao tutor
+    const historicoAtual = chatMessages.map((msg) => ({
+      role: msg.role === "mentor" ? "mentor" : "user",
+      content: msg.text,
+    }));
+
     setChatMessages((prev) => [...prev, { role: "user", text: userText }]);
     setLoadingChat(true);
 
@@ -133,6 +140,7 @@ export default function QuestoesPage() {
         questionId: selectedQuestao.id,
         mensagem: userText,
         estiloDidatico,
+        historico: historicoAtual,
       });
       setChatMessages((prev) => [...prev, { role: "mentor", text: res.resposta }]);
     } catch (err) {
@@ -404,9 +412,9 @@ export default function QuestoesPage() {
                           ? "Parabéns, você acertou a questão oficial!"
                           : `Você errou. O gabarito oficial homologado é (${attemptResult.gabarito_oficial}).`}
                       </div>
-                      <p className="text-xs mt-1 text-slate-300 leading-relaxed">
-                        {attemptResult.explicacao_mentor}
-                      </p>
+                      <div className="text-xs mt-2 text-slate-200">
+                        <MathRenderer content={attemptResult.explicacao_mentor} />
+                      </div>
 
                       {attemptResult.cognitive_snapshot?.vicios_cognitivos_relevantes?.length > 0 && (
                         <div className="mt-3 text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg flex items-center gap-2">

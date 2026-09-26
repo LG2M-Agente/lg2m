@@ -150,7 +150,7 @@ export default function SimuladosPage() {
             <Brain className="w-4 h-4 text-emerald-400" />
             <span>Parecer Pedagógico do Mentor IA</span>
           </div>
-          <p className="text-slate-200 text-sm leading-relaxed">{resultado.diagnostico_ia}</p>
+          <MathRenderer content={resultado.diagnostico_ia} className="text-slate-200 text-sm" />
         </div>
 
         {/* Desempenho por Disciplina */}

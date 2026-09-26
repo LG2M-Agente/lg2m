@@ -3,7 +3,7 @@ import "./globals.css";
 import { Navbar } from "../components/Navbar";
 
 export const metadata: Metadata = {
-  title: "LG2M — Ecossistema Agêntico Seriado (PSC/UFAM & SIS/UEA)",
+  title: "Cognitio.ia — Agente de apoio para estudo de vestibulares e concursos",
   description: "Plataforma com IA Multiagente, RAG e Heatmap Cognitivo para os vestibulares seriados do Amazonas.",
 };
 
@@ -20,7 +20,7 @@ export default function RootLayout({
           {children}
         </main>
         <footer className="border-t border-slate-900 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
-          <p>LG2M • Desenvolvido para o Hackathon AKCIT Camp 2026 • 5.771 Questões Homologadas PSC/UFAM & SIS/UEA</p>
+          <p>Cognitio.ia • 5.771 Questões Homologadas PSC/UFAM & SIS/UEA</p>
         </footer>
       </body>
     </html>

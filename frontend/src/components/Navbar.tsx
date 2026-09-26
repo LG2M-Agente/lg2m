@@ -9,7 +9,6 @@ import {
   BookOpen,
   FileSpreadsheet,
   Settings,
-  Sparkles,
   Award
 } from "lucide-react";
 import { fetchStudentProfile } from "../lib/api";
@@ -38,22 +37,20 @@ export const Navbar: React.FC = () => {
         {/* Brand */}
         <div className="flex items-center space-x-3">
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-emerald-500 to-cyan-400 p-0.5 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-emerald-500 to-cyan-400 p-0.5 flex items-center justify-center shadow-lg shadow-emerald-500/10 shrink-0">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
                 <GraduationCap className="w-5 h-5 text-emerald-400" />
               </div>
             </div>
             <div>
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-emerald-400 to-cyan-300">
-                LG2M
+                Cognitio.ia
               </span>
-              <span className="text-xs block text-slate-400 font-medium">Ecossistema Seriado IA</span>
+              <span className="text-xs block text-slate-400 font-medium">
+                Agente de apoio para estudo de vestibulares e concursos
+              </span>
             </div>
           </Link>
-          <div className="hidden md:flex items-center gap-1.5 ml-3 px-2 py-0.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>AKCIT Camp 2026</span>
-          </div>
         </div>
 
         {/* Navigation links */}

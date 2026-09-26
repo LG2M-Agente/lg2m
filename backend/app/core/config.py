@@ -41,7 +41,12 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     model_config = SettingsConfigDict(
-        env_file=(str(backend_dir / ".env"), ".env"),
+        env_file=(
+            str(backend_dir / ".env"),
+            str(backend_dir.parent / ".env"),
+            str(backend_dir.parent.parent / ".env"),
+            ".env",
+        ),
         env_file_encoding="utf-8",
         extra="ignore"
     )

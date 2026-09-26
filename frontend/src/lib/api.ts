@@ -100,6 +100,7 @@ export async function sendMentorMessage(params: {
   questionId: string;
   mensagem: string;
   estiloDidatico: string;
+  historico?: { role: string; content: string }[];
 }): Promise<{ resposta: string; estilo_didatico: string; guardrail_status: string }> {
   const res = await fetch(`${API_BASE}/mentor/chat`, {
     method: "POST",
@@ -108,6 +109,7 @@ export async function sendMentorMessage(params: {
       questao_id: params.questionId,
       mensagem: params.mensagem,
       estilo_didatico: params.estiloDidatico,
+      historico: params.historico || [],
     }),
   });
   if (!res.ok) throw new Error("Erro no diálogo com mentor");
