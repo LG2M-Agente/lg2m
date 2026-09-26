@@ -208,17 +208,20 @@ def get_recommended_questions(
             codigo_referencia=q.codigo_referencia,
             certame=q.certame.sigla if q.certame else "OUTRO",
             ano=q.ano,
-            etapa=q.etapa,
+            etapa=q.etapa_edicao,
             numero_questao=q.numero_questao,
-            disciplina=q.disciplina.nome if q.disciplina else "Geral",
-            area_conhecimento=q.disciplina.area_conhecimento if q.disciplina else "Geral",
-            assunto=q.assunto.nome if q.assunto else "Geral",
+            disciplina=q.disciplina_nome,
+            area_conhecimento=q.area_conhecimento,
+            assunto=q.assunto_rel.nome if q.assunto_rel else q.disciplina_nome,
             texto_base=q.texto_base,
             enunciado=q.enunciado,
             alternativas=alts,
             tem_imagem=q.tem_imagem,
+            imagens=q.imagens or [],
             possui_formula_matematica=q.possui_formula_matematica,
-            tags=[q.certame.sigla, f"Etapa {q.etapa}", q.disciplina.nome if q.disciplina else ""]
+            descricao_detalhada=q.descricao_detalhada,
+            curadoria=q.curadoria,
+            tags=q.tags or [q.certame.sigla if q.certame else "PSC", f"Etapa {q.etapa_edicao}", q.disciplina_nome]
         ))
 
     return res
