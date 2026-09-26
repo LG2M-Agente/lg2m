@@ -1,4 +1,4 @@
-# Cognitio.ia — Ecossistema Agêntico de Estudos Seriado
+# Cognitio.ia — Agente de apoio para estudo de vestibulares e concursos
 
 > **Piloto Oficial:** Vestibulares Seriados do Amazonas — **PSC (UFAM)** & **SIS (UEA)**  
 > **Hackathon:** AKCIT Camp 2026 • 24 e 25 de Setembro de 2026  
