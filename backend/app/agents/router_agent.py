@@ -27,7 +27,7 @@ def router_node(state: AgentState) -> Dict[str, Any]:
     if any(term in user_msg.lower() for term in forbidden_terms):
         return {
             "intent_detected": "OUT_OF_SCOPE",
-            "verified_response": "Como Mentor do LG2M, estou focado exclusivamente em auxiliar nos seus estudos para vestibulares e concursos. Como posso ajudar com a questão atual?"
+            "verified_response": "Como Mentor do Cognitio.ia, estou focado exclusivamente em auxiliar nos seus estudos para vestibulares e concursos. Como posso ajudar com a questão atual?"
         }
 
     # Se uma alternativa acabou de ser marcada pelo aluno

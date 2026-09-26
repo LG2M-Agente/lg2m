@@ -135,7 +135,7 @@ A busca na área de questões não deve ser estática, mas adaptativa à jornada
 3. **Ponderação por Zona de Desenvolvimento Proximal (ZDP):**
    * Se o aluno possui **domínio $< 40\%$** no assunto (Ponto Cego Crítico): o ranking prioriza questões com grau de dificuldade `FACIL` e `MEDIO` para sedimentação de base.
    * Se o aluno possui **domínio $\ge 75\%$**: o ranking prioriza questões `DIFICIL` ou com armadilhas frequentes de banca para treino de alta performance.
-   $$\text{Score}_{\text{final\_personalizado}} = 0.75 \times \text{Score}_{\text{CrossEncoder}} + 0.25 \times \text{Score}_{\text{ZDP}}(d, \text{aluno})$$
+   $$\mathrm{Score}_{\mathrm{personalizado}} = 0.75 \times \mathrm{Score}_{\mathrm{CrossEncoder}} + 0.25 \times \mathrm{Score}_{\mathrm{ZDP}}(d, \mathrm{aluno})$$
 
 ---
 

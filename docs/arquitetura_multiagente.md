@@ -68,5 +68,5 @@ flowchart TD
 - **Papel:** Guardião da memória de longo prazo da jornada de aprendizado.
   - Atualiza o registro na tabela `RegistroDificuldade`;
   - Recalcula a média móvel ponderada exponencial de domínio:
-    $$\text{Score}_{assunto} = \frac{\sum_{i=1}^{n} (Acerto_i \times i)}{\sum_{i=1}^{n} i}$$
+    $$\mathrm{Score}_{\mathrm{assunto}} = \frac{\sum_{i=1}^{n} (\mathrm{Acerto}_i \times i)}{\sum_{i=1}^{n} i}$$
   - Detecta se o estudante atingiu a condição de **Ponto Cego Crítico** (< 50% de acerto nas tentativas recentes) e sugere proativamente blocos de questões semelhantes de reforço.

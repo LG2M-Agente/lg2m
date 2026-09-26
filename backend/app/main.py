@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="LG2M API - Ecossistema Agêntico de Estudos Seriado",
+    title="Cognitio.ia API - Ecossistema Agêntico de Estudos Seriado",
     description=(
         "Backend inteligente com arquitetura multiagente (LangGraph + RAG Semântico) "
         "para preparação personalizada e de alta performance nos certames PSC/UFAM e SIS/UEA. "
@@ -100,7 +100,7 @@ def health_check():
 @app.get("/", tags=["Infraestrutura"])
 def root():
     return {
-        "message": "Bem-vindo à API do LG2M - Ecossistema Agêntico para PSC/UFAM e SIS/UEA",
+        "message": "Bem-vindo à API do Cognitio.ia - Ecossistema Agêntico para PSC/UFAM e SIS/UEA",
         "docs": "/docs",
         "redoc": "/redoc",
         "health": "/health"

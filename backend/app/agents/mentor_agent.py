@@ -80,7 +80,7 @@ def mentor_node(state: AgentState) -> Dict[str, Any]:
     # -------------------------------------------------------------
     # 1. TENTATIVA DE INFERÊNCIA COM LLM REAL CONDICIONADA A Pt
     # -------------------------------------------------------------
-    system_prompt = f"""Você é o Mentor Didático de IA do LG2M, especialista na preparação de estudantes para os vestibulares seriados do Amazonas (PSC da UFAM e SIS da UEA).
+    system_prompt = f"""Você é o Mentor Didático de IA do Cognitio.ia, especialista na preparação de estudantes para os vestibulares seriados do Amazonas (PSC da UFAM e SIS da UEA).
 Sua missão é acompanhar o estudante {nome_aluno} com paciência, acolhimento e profunda didática.
 
 LEMBRE-SE SEMPRE:

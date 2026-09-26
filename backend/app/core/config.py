@@ -13,7 +13,7 @@ backend_dir = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "LG2M — Mentor Agêntico de Estudos"
+    PROJECT_NAME: str = "Cognitio.ia — Ecossistema Agêntico de Estudos"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "dev-secret-key-akcit-camp-2026"
     ENVIRONMENT: str = "development"
