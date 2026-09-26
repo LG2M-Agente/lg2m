@@ -18,6 +18,7 @@ from app.api.v1.attempts import router as attempts_router
 from app.api.v1.mentor import router as mentor_router
 from app.api.v1.simulados import router as simulados_router
 from app.api.v1.student import router as student_router
+from app.api.v1.trace import router as trace_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -72,6 +73,7 @@ app.include_router(attempts_router, prefix=api_v1_prefix)
 app.include_router(mentor_router, prefix=api_v1_prefix)
 app.include_router(simulados_router, prefix=api_v1_prefix)
 app.include_router(student_router, prefix=api_v1_prefix)
+app.include_router(trace_router, prefix=api_v1_prefix)  # Observabilidade Agêntica em Tempo Real
 
 
 @app.get("/health", tags=["Infraestrutura"])

@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LG2M — Agent Flow Visualizer</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+
+    body{
+      background:#060b14;color:#f8fafc;
+      font-family:'Inter','Segoe UI',system-ui,sans-serif;
+      display:grid;
+      grid-template-rows: 44px 1fr 8px minmax(180px,240px);
+      height:100vh;
+    }
+
+    /* ══ HEADER ═══════════════════════════════════════ */
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 18px;background:#08101f;
+      border-bottom:1px solid #162035;gap:10px;
+    }
+    .logo{display:flex;align-items:center;gap:8px}
+    .logo-badge{
+      background:linear-gradient(135deg,#3b82f6,#a855f7);
+      border-radius:6px;padding:3px 9px;
+      font-weight:800;font-size:13px;color:#fff;
+    }
+    .logo-sub{font-size:11px;color:#cbd5e1;line-height:1.3}
+    .logo-sub strong{color:#f8fafc;font-size:12px}
+
+    .hright{display:flex;align-items:center;gap:7px}
+    .url-inp{
+      background:#08101f;color:#cbd5e1;border:1px solid #162035;
+      border-radius:6px;padding:3px 8px;font-size:11px;font-family:monospace;width:230px;
+    }
+    .url-inp:focus{outline:none;border-color:#3b82f6;color:#f8fafc}
+    .hbtn{
+      padding:3px 11px;border-radius:6px;border:1px solid #162035;
+      background:transparent;color:#cbd5e1;font-size:11px;font-weight:600;cursor:pointer;
+      transition:all .18s;
+    }
+    .hbtn:hover{border-color:#3b82f6;color:#3b82f6}
+    .hbtn.red:hover{border-color:#ef4444;color:#ef4444}
+
+    #cbadge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;transition:all .3s}
+    #cbadge.connecting{background:rgba(245,158,11,.08);color:#f59e0b;border:1px solid rgba(245,158,11,.22)}
+    #cbadge.connected {background:rgba(34,197,94,.08); color:#22c55e;border:1px solid rgba(34,197,94,.22)}
+    #cbadge.error     {background:rgba(239,68,68,.08); color:#ef4444;border:1px solid rgba(239,68,68,.22)}
+    .cdot{width:6px;height:6px;border-radius:50%;background:currentColor}
+    .cdot.pulse{animation:pd 1.2s ease infinite}
+    @keyframes pd{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.5)}}
+
+    /* ══ TOP SECTION (graph + right panels) ═══════════ */
+    .top-section{
+      display:grid;
+      grid-template-columns: 1fr 380px;
+      overflow:hidden;
+      min-height:0;
+    }
+
+    /* ── graph ── */
+    .graph-panel{
+      position:relative;overflow:hidden;
+      background:radial-gradient(ellipse at 50% 0%,rgba(59,130,246,.04),transparent 65%);
+    }
+    #gsvg{width:100%;height:100%;display:block;cursor:grab;}
+    #gsvg:active{cursor:grabbing;}
+    #prog{position:absolute;bottom:0;left:0;right:0;height:3px;background:#08101f}
+    #prog-fill{height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#a855f7);transition:width .5s}
+
+    /* ── right panels ── */
+    .right-col{
+      border-left:1px solid #162035;background:#07101e;
+      display:flex;flex-direction:column;overflow:hidden;
+      overflow-y:auto;
+    }
+    .rblock{padding:10px 14px;border-bottom:1px solid #162035;flex-shrink:0}
+    .rtitle{font-size:8.5px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:#cbd5e1;margin-bottom:8px}
+
+    /* trigger */
+    #trig-card{
+      background:#0b1525;border:1px solid #162035;border-radius:8px;
+      padding:10px 12px;transition:border-color .4s,background .4s;
+    }
+    #trig-card.RESPOSTA_MARCADA{border-color:#3b82f640;background:#0d1f3a}
+    #trig-card.CHAT_PERGUNTA   {border-color:#a855f740;background:#160e2a}
+    #trig-card.STREAM_MENTORIA {border-color:#f59e0b40;background:#1e1505}
+
+    .trig-top{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+    #trig-icon{font-size:18px;flex-shrink:0}
+    .trig-right{}
+    .tbadge{
+      display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;
+      border:1px solid currentColor;margin-bottom:2px;
+    }
+    .tbadge.idle             {color:#cbd5e1}
+    .tbadge.RESPOSTA_MARCADA {color:#60a5fa}
+    .tbadge.CHAT_PERGUNTA    {color:#c084fc}
+    .tbadge.STREAM_MENTORIA  {color:#fbbf24}
+    #trig-label{font-size:11.5px;font-weight:700;color:#f8fafc}
+    #trig-detail{font-size:11px;color:#cbd5e1;margin-bottom:5px;line-height:1.35}
+    #trig-preview{
+      font-size:9.5px;color:#e2e8f0;font-family:monospace;
+      background:#060b14;border-radius:4px;padding:4px 7px;
+      border-left:2px solid #3b82f6;line-height:1.4;
+    }
+    #trig-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+    .pill{font-size:8.5px;padding:1px 6px;border-radius:6px;background:#162035;border:1px solid #3b82f6;color:#e2e8f0}
+
+    /* agent + state side by side */
+    .ag-state-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+
+    #ag-card{
+      background:#0b1525;border:1px solid #162035;border-radius:8px;
+      padding:9px 11px;transition:border-color .3s,background .3s;
+      display:flex;align-items:flex-start;gap:8px;
+    }
+    #ag-em{font-size:20px;flex-shrink:0}
+    #ag-b{}
+    #ag-name{font-size:11.5px;font-weight:700;color:#f8fafc;margin-bottom:3px}
+    #ag-tools{display:flex;flex-wrap:wrap;gap:3px}
+    .atool{font-size:8.5px;padding:1px 6px;border-radius:7px;background:rgba(59,130,246,.07);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
+    #ag-dur{font-size:9px;color:#94a3b8;margin-top:4px}
+
+    .sg{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+    .si{background:#060b14;border:1px solid #162035;border-radius:5px;padding:4px 7px}
+    .sk{font-size:8px;color:#94a3b8;margin-bottom:1px}
+    .sv{font-size:10.5px;font-weight:700;font-family:monospace;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .sv.blue  {color:#60a5fa}.sv.green{color:#4ade80}.sv.red{color:#f87171}
+    .sv.yellow{color:#fbbf24}.sv.purple{color:#c084fc}
+
+    /* metrics */
+    .mrow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+    .mb{background:#060b14;border:1px solid #162035;border-radius:6px;padding:6px 5px;text-align:center}
+    .mv{font-size:16px;font-weight:800}.ml{font-size:8px;color:#cbd5e1;margin-top:1px}
+
+    /* ══ RESIZE HANDLE ════════════════════════════════ */
+    #resize-handle{
+      background:#0b1525;border-top:1px solid #162035;border-bottom:1px solid #162035;
+      cursor:ns-resize;display:flex;align-items:center;justify-content:center;
+      user-select:none;flex-shrink:0;
+      transition:background .2s;
+    }
+    #resize-handle:hover,#resize-handle.dragging{background:#162035}
+    .handle-dots{
+      display:flex;gap:4px;
+      pointer-events:none;
+    }
+    .handle-dots span{width:28px;height:2px;border-radius:2px;background:#64748b}
+    #resize-handle:hover .handle-dots span,
+    #resize-handle.dragging .handle-dots span{background:#60a5fa}
+
+    /* ══ LOG PANEL (full width, resizable) ════════════ */
+    .log-panel{
+      display:grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: 34px 1fr;
+      overflow:hidden;
+      background:#05090f;
+      border-top:1px solid #162035;
+      min-height:0;
+    }
+
+    .log-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 14px;background:#07101e;
+      border-bottom:1px solid #162035;flex-shrink:0;gap:8px;
+    }
+    .log-bar-left{display:flex;align-items:center;gap:8px}
+    .log-bar-title{font-size:9px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:#cbd5e1}
+    #log-count-badge{font-size:9px;background:#162035;border:1px solid #334155;padding:1px 7px;border-radius:7px;color:#e2e8f0}
+    #exec-count-badge{font-size:9px;background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.4);padding:1px 7px;border-radius:7px;color:#93c5fd}
+    .log-bar-right{display:flex;align-items:center;gap:6px}
+    .lbtn{font-size:9px;padding:2px 8px;border-radius:5px;border:1px solid #334155;background:transparent;color:#cbd5e1;cursor:pointer;transition:all .18s}
+    .lbtn:hover{border-color:#60a5fa;color:#60a5fa;background:#162035}
+    .lbtn.red:hover{border-color:#ef4444;color:#ef4444;background:#140404}
+
+    /* the actual scrollable feed */
+    #log-feed{
+      overflow-y:auto;overflow-x:hidden;
+      padding:8px 12px;
+      display:flex;flex-direction:column;gap:6px;
+    }
+
+    /* ── EXECUTION GROUP ─────────────────────────────
+       Each graph_start…graph_end forms one group        */
+    .exec-group{
+      border:1px solid #162035;border-radius:9px;overflow:hidden;
+      animation:efade .3s ease;
+      flex-shrink:0;
+    }
+    @keyframes efade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+    .exec-header{
+      display:grid;
+      grid-template-columns: auto 1fr auto;
+      align-items:center;gap:10px;
+      padding:9px 12px;
+      cursor:pointer;
+      user-select:none;
+      border-bottom:1px solid transparent;
+      transition:background .2s;
+    }
+    .exec-header:hover{background:rgba(255,255,255,.05)}
+
+    .exec-num{
+      font-size:11px;font-weight:800;width:26px;height:26px;
+      border-radius:50%;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;
+      background:#0b1525;border:2px solid currentColor;
+    }
+
+    .exec-header-body{}
+    .exec-title{font-size:12px;font-weight:700;margin-bottom:2px}
+    .exec-sub{font-size:10px;color:#cbd5e1;line-height:1.3}
+
+    .exec-header-right{text-align:right;flex-shrink:0}
+    .exec-time{font-size:9px;color:#94a3b8;display:block}
+    .exec-dur{font-size:11px;font-weight:700;color:#4ade80;display:block;margin-top:2px}
+    .exec-dur.pending{color:#fbbf24}
+    .exec-status-badge{
+      font-size:8.5px;font-weight:700;padding:2px 7px;border-radius:6px;
+      margin-top:3px;display:inline-block;
+    }
+    .exec-status-badge.APPROVED{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+    .exec-status-badge.REJECTED{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+    .exec-status-badge.running {background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+
+    .exec-toggle{font-size:10px;color:#cbd5e1;margin-left:4px;flex-shrink:0}
+
+    /* events inside a group */
+    .exec-events{
+      padding:0 8px 6px 8px;
+      display:flex;flex-direction:column;gap:2px;
+      background:#05090f;
+    }
+    .exec-group.collapsed .exec-events{display:none}
+    .exec-group.collapsed .exec-header{border-bottom-color:transparent}
+
+    /* individual event row */
+    .ev{
+      display:grid;grid-template-columns:22px 1fr auto auto;
+      align-items:center;gap:6px;
+      padding:4px 7px;border-radius:5px;
+      border-left:3px solid transparent;
+      transition:background .15s;
+    }
+    .ev:hover{background:#162035}
+    .ev.clickable { cursor: pointer; }
+    .ev.clickable:hover { background: #1e293b; }
+
+    .ev.ev-node_start {border-left-color:#64748b}
+    .ev.ev-node_end.ev-done {border-left-color:#4ade80}
+    .ev.ev-node_end.ev-rejected{border-left-color:#ef4444}
+    .ev.ev-edge       {border-left-color:#cbd5e1}
+    .ev.ev-tool_call  {border-left-color:#06b6d4;padding-left:20px}
+    .ev.ev-guardrail_event.ev-approved{border-left-color:#4ade80}
+    .ev.ev-guardrail_event.ev-rejected-gev{border-left-color:#ef4444}
+    .ev.ev-graph_end  {border-left-color:#22c55e;background:#071a0e}
+
+    .ev-icon{font-size:12px;text-align:center}
+    .ev-body{min-width:0}
+    .ev-text{font-size:10.5px;color:#e2e8f0;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ev-text strong{color:#ffffff}
+    .ev-text .hi{color:#93c5fd;font-weight:700}
+    .ev-btn-details { font-size:9px; background:#1e293b; border:1px solid #475569; color:#f1f5f9; border-radius:4px; padding:3px 6px; cursor:pointer; }
+    .ev-btn-details:hover { background:#3b82f6; border-color:#60a5fa; color:#fff; }
+    .ev-right{text-align:right;flex-shrink:0}
+    .ev-dur{font-size:9.5px;font-family:monospace;color:#4ade80;font-weight:600}
+    .ev-time{font-size:8.5px;color:#94a3b8}
+
+    /* ── SVG ──────────────────────────────────────── */
+    .edge{fill:none;stroke:#334155;stroke-width:1.5;transition:stroke .5s,stroke-width .4s}
+    .edge.live{stroke-width:2.5}
+    .edash{stroke-dasharray:5,4}
+    .nr{
+      rx:11;fill:#0b1525;stroke:#334155;stroke-width:1.5;
+      transition:stroke .4s,fill .4s,filter .4s,stroke-width .4s;
+    }
+    .nr.active{stroke-width:2.5;filter:drop-shadow(0 0 11px var(--nc,#3b82f6))}
+    .nr.done  {stroke:#4ade80;filter:drop-shadow(0 0 6px rgba(34,197,94,.45))}
+    .nr.rej   {stroke:#ef4444;fill:#140404;filter:drop-shadow(0 0 6px rgba(239,68,68,.45))}
+    .nr.idle  {stroke:#334155;fill:#0b1525;filter:none}
+    .nt{text-anchor:middle;fill:#f8fafc;font-size:10.5px;font-weight:700}
+    .ns{text-anchor:middle;fill:#cbd5e1;font-size:8.5px}
+    .ni{font-size:17px;text-anchor:middle;dominant-baseline:middle}
+    .nb{rx:6}.nbt{font-size:7.5px;font-weight:700;text-anchor:middle;dominant-baseline:middle}
+    .ndur{text-anchor:middle;fill:#4ade80;font-size:8.5px;dominant-baseline:middle;opacity:0;transition:opacity .3s}
+    .el{font-size:8px;fill:#cbd5e1;text-anchor:middle;dominant-baseline:middle}
+    .elb{rx:3;fill:#060b14;opacity:.9}
+
+    /* ══ MODAL DE DETALHES ══════════════════════════ */
+    .modal-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(3px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #0f172a; border: 1px solid #334155; border-radius: 12px;
+      width: 90%; max-width: 800px; max-height: 90vh;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+    .modal-header {
+      padding: 12px 18px; border-bottom: 1px solid #334155;
+      display: flex; align-items: center; justify-content: space-between;
+      background: #1e293b;
+    }
+    .modal-title { font-size: 14px; font-weight: 700; color: #f8fafc; display:flex; align-items:center; gap:8px; }
+    .modal-close {
+      background: transparent; border: none; color: #94a3b8; font-size: 20px;
+      cursor: pointer; line-height: 1; transition: color .2s;
+    }
+    .modal-close:hover { color: #ef4444; }
+    .modal-body {
+      padding: 0; overflow-y: auto; flex: 1; display:flex; flex-direction:column;
+    }
+    .json-block {
+      margin: 10px; background: #0b1525; border: 1px solid #334155; border-radius: 8px;
+      overflow: hidden;
+    }
+    .json-block-header {
+      padding: 6px 12px; background: #1e293b; border-bottom: 1px solid #334155;
+      font-size: 11px; font-weight: 700; color: #f1f5f9; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .json-pre {
+      padding: 12px; margin: 0; font-family: monospace; font-size: 12px;
+      color: #cbd5e1; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;
+    }
+    /* Syntax highlighting para JSON */
+    .j-key { color: #93c5fd; }
+    .j-str { color: #86efac; }
+    .j-num { color: #fcd34d; }
+    .j-bool { color: #c084fc; font-weight: bold; }
+    .j-null { color: #fca5a5; font-weight: bold; }
+
+    ::-webkit-scrollbar{width:6px; height:6px}
+    ::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:#475569}
+  </style>
+</head>
+<body>
+
+<!-- ══ HEADER ════════════════════════════════════════ -->
+<header>
+  <div class="logo">
+    <div class="logo-badge">LG2M</div>
+    <div class="logo-sub">
+      <strong>Agent Flow Visualizer — Tempo Real</strong>
+      LangGraph · 5 Agentes Autônomos
+    </div>
+  </div>
+  <div class="hright">
+    <input class="url-inp" id="ws-url" value="ws://localhost:8000/api/v1/trace/ws"/>
+    <button class="hbtn" id="btn-connect">Conectar</button>
+    <button class="hbtn red" id="btn-clear">Limpar tudo</button>
+    <div id="cbadge" class="connecting">
+      <div class="cdot pulse"></div>
+      <span id="ctext">Desconectado</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══ TOP SECTION ═══════════════════════════════════ -->
+<div class="top-section">
+
+  <!-- GRAPH -->
+  <div class="graph-panel">
+    <svg id="gsvg" viewBox="0 0 760 480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a0" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L0,6L8,3z" fill="#94a3b8"/></marker>
+        <marker id="ab" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L0,6L8,3z" fill="#60a5fa"/></marker>
+        <marker id="ac" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L0,6L8,3z" fill="#22d3ee"/></marker>
+        <marker id="ap" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L0,6L8,3z" fill="#c084fc"/></marker>
+        <marker id="ag" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L0,6L8,3z" fill="#4ade80"/></marker>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0L0,6L8,3z" fill="#f87171"/></marker>
+      </defs>
+
+      <!-- Edges -->
+      <line   id="e-start-router"       x1="65" y1="238" x2="175" y2="238" class="edge" marker-end="url(#a0)"/>
+      <path   id="e-router-retriever"   d="M288,212 Q330,135 412,120" class="edge" marker-end="url(#a0)"/>
+      <path   id="e-router-mentor"      d="M288,264 Q330,330 412,345" class="edge" marker-end="url(#a0)"/>
+      <path   id="e-retriever-end"      d="M556,112 L645,192" class="edge" marker-end="url(#a0)"/>
+      <path   id="e-mentor-guardrail"   d="M556,360 L600,392" class="edge" marker-end="url(#a0)"/>
+      <path   id="e-guardrail-profiler" d="M648,435 L564,452" class="edge" marker-end="url(#a0)"/>
+      <path   id="e-guardrail-mentor"   d="M602,392 Q580,370 558,360" class="edge edash" marker-end="url(#a0)"/>
+      <path   id="e-profiler-end"       d="M478,458 L648,418" class="edge" marker-end="url(#a0)"/>
+
+      <!-- Edge labels -->
+      <g><rect x="312" y="150" width="65" height="11" class="elb"/><text x="344" y="157" class="el">Buscar/Simulado</text></g>
+      <g><rect x="312" y="334" width="58" height="11" class="elb"/><text x="341" y="340" class="el">Dúvida/Erro</text></g>
+      <g><rect x="556" y="373" width="50" height="11" class="elb"/><text x="581" y="379" class="el">Rascunho</text></g>
+      <g><rect x="600" y="436" width="55" height="11" class="elb"/><text x="627" y="442" class="el" style="fill:#4ade80">✓ APPROVED</text></g>
+      <g><rect x="556" y="352" width="46" height="11" class="elb"/><text x="579" y="358" class="el" style="fill:#f87171">✗ REJECT</text></g>
+
+      <!-- State store -->
+      <rect x="340" y="215" width="80" height="40" rx="7" fill="#0b1525" stroke="#334155" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="380" y="231" class="ns">AgentState</text>
+      <text x="380" y="244" class="ns" style="fill:#94a3b8;font-size:7.5px">Estado Compartilhado</text>
+
+      <!-- START -->
+      <circle cx="46" cy="238" r="17" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <text x="46" y="238" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="700" fill="#cbd5e1">START</text>
+
+      <!-- END -->
+      <rect x="650" y="170" width="54" height="240" rx="7" fill="#1e293b" stroke="#334155" stroke-width="1" stroke-dasharray="4,3" opacity=".6"/>
+      <text x="677" y="290" font-size="12" font-weight="700" fill="#cbd5e1" text-anchor="middle" dominant-baseline="middle">END</text>
+
+      <!-- ROUTER -->
+      <g id="n-router">
+        <rect id="r-router" x="177" y="204" width="114" height="66" class="nr idle" style="--nc:#60a5fa"/>
+        <text x="234" y="223" class="ni">🧠</text><text x="234" y="242" class="nt">Agente 1</text>
+        <text x="234" y="254" class="ns">Orquestrador &amp; Triagem</text>
+        <rect x="185" y="208" width="39" height="10" class="nb" fill="rgba(59,130,246,.14)"/>
+        <text x="204" y="214" class="nbt" fill="#93c5fd">Router</text>
+        <text id="dur-router" x="234" y="264" class="ndur">—</text>
+      </g>
+
+      <!-- RETRIEVER -->
+      <g id="n-retriever">
+        <rect id="r-retriever" x="414" y="88" width="140" height="62" class="nr idle" style="--nc:#22d3ee"/>
+        <text x="484" y="106" class="ni">🔍</text><text x="484" y="124" class="nt">Agente 2</text>
+        <text x="484" y="136" class="ns">Curador RAG Semântico</text>
+        <rect x="422" y="92" width="50" height="10" class="nb" fill="rgba(6,182,212,.14)"/>
+        <text x="447" y="98" class="nbt" fill="#67e8f9">Retriever</text>
+        <text id="dur-retriever" x="484" y="145" class="ndur">—</text>
+      </g>
+
+      <!-- MENTOR -->
+      <g id="n-mentor">
+        <rect id="r-mentor" x="414" y="328" width="140" height="62" class="nr idle" style="--nc:#c084fc"/>
+        <text x="484" y="346" class="ni">📚</text><text x="484" y="364" class="nt">Agente 3</text>
+        <text x="484" y="376" class="ns">Mentor Didático</text>
+        <rect x="422" y="332" width="38" height="10" class="nb" fill="rgba(168,85,247,.14)"/>
+        <text x="441" y="338" class="nbt" fill="#d8b4fe">Mentor</text>
+        <text id="dur-mentor" x="484" y="385" class="ndur">—</text>
+      </g>
+
+      <!-- GUARDRAIL -->
+      <g id="n-guardrail">
+        <rect id="r-guardrail" x="580" y="392" width="140" height="62" class="nr idle" style="--nc:#f87171"/>
+        <text x="650" y="410" class="ni">🛡️</text><text x="650" y="428" class="nt">Agente 5</text>
+        <text x="650" y="440" class="ns">Guardrail &amp; Verificador</text>
+        <rect x="588" y="396" width="48" height="10" class="nb" fill="rgba(239,68,68,.14)"/>
+        <text x="612" y="402" class="nbt" fill="#fca5a5">Guardrail</text>
+        <text id="dur-guardrail" x="650" y="449" class="ndur">—</text>
+      </g>
+
+      <!-- PROFILER -->
+      <g id="n-profiler">
+        <rect id="r-profiler" x="414" y="440" width="140" height="62" class="nr idle" style="--nc:#4ade80"/>
+        <text x="484" y="458" class="ni">📊</text><text x="484" y="476" class="nt">Agente 4</text>
+        <text x="484" y="488" class="ns">Profiler Cognitivo</text>
+        <rect x="422" y="444" width="38" height="10" class="nb" fill="rgba(34,197,94,.14)"/>
+        <text x="441" y="450" class="nbt" fill="#86efac">Profiler</text>
+        <text id="dur-profiler" x="484" y="497" class="ndur">—</text>
+      </g>
+
+      <!-- Particle -->
+      <circle id="ptcl" r="4.5" cx="-99" cy="-99" fill="#60a5fa" opacity="0" style="filter:drop-shadow(0 0 5px #60a5fa)"/>
+    </svg>
+    <div id="prog"><div id="prog-fill"></div></div>
+  </div>
+
+  <!-- RIGHT PANELS -->
+  <div class="right-col">
+
+    <!-- TRIGGER -->
+    <div class="rblock">
+      <div class="rtitle">🎯 Ação do Usuário (Trigger)</div>
+      <div id="trig-card">
+        <div class="trig-top">
+          <div id="trig-icon">⏳</div>
+          <div class="trig-right">
+            <div class="tbadge idle" id="tbadge">AGUARDANDO</div>
+            <div id="trig-label" style="color:#cbd5e1">Nenhuma ação capturada</div>
+          </div>
+        </div>
+        <div id="trig-detail" style="color:#cbd5e1">Use o frontend e o trigger aparecerá aqui automaticamente.</div>
+        <div id="trig-preview" style="color:#cbd5e1">—</div>
+        <div id="trig-pills"></div>
+      </div>
+    </div>
+
+    <!-- AGENT + STATE -->
+    <div class="rblock">
+      <div class="rtitle">🤖 Agente Ativo &amp; Estado</div>
+      <div class="ag-state-row">
+        <div id="ag-card">
+          <div id="ag-em">—</div>
+          <div id="ag-b">
+            <div id="ag-name">Aguardando execução…</div>
+            <div id="ag-tools"></div>
+            <div id="ag-dur"></div>
+          </div>
+        </div>
+        <div class="sg">
+          <div class="si"><div class="sk">intent</div>    <div class="sv blue"  id="s-intent">—</div></div>
+          <div class="si"><div class="sk">guardrail</div> <div class="sv"       id="s-gs">—</div></div>
+          <div class="si"><div class="sk">is_correct</div><div class="sv"       id="s-correct">—</div></div>
+          <div class="si"><div class="sk">attempts</div>  <div class="sv blue"  id="s-att">0</div></div>
+          <div class="si"><div class="sk">err_class</div> <div class="sv yellow" id="s-ec">—</div></div>
+          <div class="si"><div class="sk">estilo</div>    <div class="sv purple" id="s-est">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- METRICS -->
+    <div class="rblock">
+      <div class="rtitle">📈 Métricas</div>
+      <div class="mrow">
+        <div class="mb"><div class="mv" id="m-exec" style="color:#60a5fa">0</div><div class="ml">Execuções</div></div>
+        <div class="mb"><div class="mv" id="m-lat"  style="color:#4ade80">—</div><div class="ml">Última lat.</div></div>
+        <div class="mb"><div class="mv" id="m-rej"  style="color:#f87171">0</div><div class="ml">Rejeições</div></div>
+        <div class="mb"><div class="mv" id="m-nds"  style="color:#c084fc">0</div><div class="ml">Nós exec.</div></div>
+      </div>
+    </div>
+
+  </div><!-- /right-col -->
+</div><!-- /top-section -->
+
+<!-- ══ RESIZE HANDLE ════════════════════════════════ -->
+<div id="resize-handle">
+  <div class="handle-dots">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- ══ LOG PANEL (full width) ════════════════════════ -->
+<div class="log-panel">
+  <div class="log-bar">
+    <div class="log-bar-left">
+      <span class="log-bar-title">📋 Execuções &amp; Eventos</span>
+      <span id="exec-count-badge">0 execuções</span>
+      <span id="log-count-badge">0 eventos</span>
+    </div>
+    <div class="log-bar-right">
+      <button class="lbtn" id="btn-collapse-all">Recolher tudo</button>
+      <button class="lbtn" id="btn-expand-all">Expandir tudo</button>
+      <button class="lbtn red" id="btn-clear-log">Limpar log</button>
+    </div>
+  </div>
+  <div id="log-feed"></div>
+</div>
+
+<!-- ══ MODAL PARA JSON DETAILS ═══════════════════════ -->
+<div class="modal-overlay" id="modal-details">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">📦 Detalhes do Nó</div>
+      <button class="modal-close" id="btn-close-modal">×</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <!-- as caixas JSON entram aqui -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  PAN / DRAG THE SVG GRAPH
+// ══════════════════════════════════════════════════════
+const svgEl = document.getElementById('gsvg');
+let isPanning = false;
+let startPan = { x: 0, y: 0 };
+let viewBox = { x: 0, y: 0, w: 760, h: 480 };
+
+svgEl.addEventListener('mousedown', e => {
+  isPanning = true;
+  startPan = { x: e.clientX, y: e.clientY };
+});
+
+window.addEventListener('mousemove', e => {
+  if (!isPanning) return;
+  const dx = (startPan.x - e.clientX) * (viewBox.w / svgEl.clientWidth);
+  const dy = (startPan.y - e.clientY) * (viewBox.h / svgEl.clientHeight);
+  svgEl.setAttribute('viewBox', `${viewBox.x + dx} ${viewBox.y + dy} ${viewBox.w} ${viewBox.h}`);
+});
+
+window.addEventListener('mouseup', e => {
+  if (!isPanning) return;
+  isPanning = false;
+  const dx = (startPan.x - e.clientX) * (viewBox.w / svgEl.clientWidth);
+  const dy = (startPan.y - e.clientY) * (viewBox.h / svgEl.clientHeight);
+  viewBox.x += dx;
+  viewBox.y += dy;
+});
+
+// ══════════════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════════════
+const NC = {router:'#60a5fa',retriever:'#22d3ee',mentor:'#c084fc',guardrail:'#f87171',profiler:'#4ade80'};
+const EM = {router:'🧠',retriever:'🔍',mentor:'📚',guardrail:'🛡️',profiler:'📊'};
+const TOOLS = {
+  router:   ['sanitize_input()','detect_intent()','cognitive_snapshot()'],
+  retriever:['search_semantic_questions()','fetch_isomorphic_similar()','cosine_similarity()'],
+  mentor:   ['build_didactic_explanation()','classify_error_type()','apply_teaching_style()'],
+  guardrail:['verify_gabarito_alignment()','math_sandbox()','record_audit_log()'],
+  profiler: ['update_cognitive_profile()','recalculate_domain_score()','detect_blindspot()'],
+};
+const EDGE_COORDS = {
+  'start-router':      {x1:65, y1:238,x2:177,y2:238},
+  'router-retriever':  {x1:288,y1:220,x2:414,y2:125},
+  'router-mentor':     {x1:288,y1:258,x2:414,y2:350},
+  'retriever-end':     {x1:554,y1:112,x2:650,y2:200},
+  'mentor-guardrail':  {x1:554,y1:362,x2:600,y2:396},
+  'guardrail-profiler':{x1:648,y1:436,x2:562,y2:452},
+  'guardrail-mentor':  {x1:600,y1:395,x2:557,y2:364},
+  'profiler-end':      {x1:480,y1:460,x2:650,y2:416},
+};
+const TRIG_CFG = {
+  RESPOSTA_MARCADA:{icon:'🖱️',label:'Alternativa Marcada',cls:'RESPOSTA_MARCADA'},
+  CHAT_PERGUNTA:   {icon:'💬',label:'Pergunta no Chat do Mentor',cls:'CHAT_PERGUNTA'},
+  STREAM_MENTORIA: {icon:'⚡',label:'Streaming SSE de Mentoria',cls:'STREAM_MENTORIA'},
+};
+const PROG = {
+  router:   {s:12,e:26},retriever:{s:34,e:62},
+  mentor:   {s:34,e:58},guardrail:{s:64,e:80},profiler:{s:84,e:97},
+};
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let ws=null, execCount=0, rejCount=0, nodeCount=0;
+let totalEvents=0;
+let currentNode=null, graphStartTime=null;
+const doneNodes=new Set();
+
+// Eventos armazenados para exibir no modal
+const eventStore = {};
+
+// Current execution group DOM element & its events container
+let currentGroup=null, currentEventsEl=null, currentGroupId=null;
+
+// ══════════════════════════════════════════════════════
+//  WS
+// ══════════════════════════════════════════════════════
+function connect() {
+  const url = document.getElementById('ws-url').value.trim();
+  if (ws){try{ws.close()}catch(_){} ws=null;}
+  setBadge('connecting','Conectando…');
+  try { ws = new WebSocket(url); } catch(e){ setBadge('error','URL inválida'); return; }
+  ws.onopen  = () => { setBadge('connected','Conectado'); addSysEvent('🔗','WebSocket conectado'); };
+  ws.onmessage = ev => {
+    try {
+      const d = JSON.parse(ev.data);
+      if (d.type==='ping') return;
+      if (d.type==='replay') { d.events.forEach(handleEvent); return; }
+      handleEvent(d);
+    } catch(_){}
+  };
+  ws.onerror  = ()  => setBadge('error','Erro de conexão');
+  ws.onclose  = ()  => { setBadge('error','Desconectado — reconectando…'); ws=null; setTimeout(connect,3000); };
+}
+
+// ══════════════════════════════════════════════════════
+//  EVENT HANDLER
+// ══════════════════════════════════════════════════════
+function handleEvent(ev) {
+  const evId = 'ev_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+  eventStore[evId] = ev; // Salva para o modal
+
+  switch(ev.type) {
+
+    case 'graph_start': {
+      graphStartTime = Date.now();
+      execCount++; nodeCount=0;
+      document.getElementById('m-exec').textContent = execCount;
+      document.getElementById('m-nds').textContent  = 0;
+      resetGraph();
+      updateTrigger(ev);
+      updateState({intent_detected:ev.intent, estilo_didatico:ev.estilo});
+      animEdge('start-router','#60a5fa');
+      setProgress(6);
+      openExecGroup(execCount, ev);
+      break;
+    }
+
+    case 'node_start': {
+      nodeCount++;
+      document.getElementById('m-nds').textContent = nodeCount;
+      setNodeActive(ev.node);
+      updateState(ev.state||{});
+      setProgress(PROG[ev.node]?.s ?? 30);
+      appendToGroup('ev-node_start clickable', EM[ev.node]||'•',
+        `<strong>${ev.label||ev.node}</strong> iniciando…`, '', ev.ts, true, evId);
+      break;
+    }
+
+    case 'node_end': {
+      setNodeDone(ev.node, ev.status);
+      updateState(ev.state||{});
+      setDur(ev.node, ev.duration_ms);
+      setProgress(PROG[ev.node]?.e ?? 60);
+      const isRej = ev.status==='rejected';
+      appendToGroup(
+        `ev-node_end ev-${isRej?'rejected':'done'} clickable`,
+        isRej?'⚠️':'✅',
+        `<strong>${ev.label||ev.node}</strong> — ${ev.output_summary||''}`,
+        ev.duration_ms?.toFixed(0)+'ms', ev.ts, true, evId
+      );
+      break;
+    }
+
+    case 'edge': {
+      const col = NC[ev.to]||'#60a5fa';
+      animEdge(`${ev.from}-${ev.to}`, col);
+      appendToGroup('ev-edge','→',
+        `${ev.from} → <strong>${ev.to}</strong>${ev.label?' · <em>'+ev.label+'</em>':''}`,
+        '', ev.ts, false
+      );
+      break;
+    }
+
+    case 'tool_call': {
+      appendToGroup('ev-tool_call','🔧',`tool_call → <strong>${ev.tool}</strong>`, '', ev.ts, false);
+      break;
+    }
+
+    case 'guardrail_event': {
+      const isRej = ev.status==='REJECTED';
+      if (isRej) { rejCount++; document.getElementById('m-rej').textContent=rejCount; }
+      updateState({guardrail_status:ev.status, verification_attempts:ev.attempt});
+      appendToGroup(
+        `ev-guardrail_event ${isRej?'ev-rejected-gev':'ev-approved'}`,
+        isRej?'🛡️⚠️':'🛡️✅',
+        `Guardrail <strong style="color:${isRej?'#f87171':'#4ade80'}">${ev.status}</strong> · tentativa ${ev.attempt}${ev.reason?' · '+ev.reason.slice(0,50):''}`,
+        '', ev.ts, false
+      );
+      break;
+    }
+
+    case 'graph_end': {
+      const ms = ev.total_ms ?? (Date.now()-graphStartTime);
+      const latStr = typeof ms==='number' ? ms.toFixed(0)+'ms' : ms+'ms';
+      document.getElementById('m-lat').textContent = latStr;
+      setProgress(100);
+      closeExecGroup(latStr, ev.guardrail_status||'APPROVED');
+      appendToGroup('ev-graph_end','🏁',
+        `Grafo concluído em <strong class="hi">${latStr}</strong> · ${ev.guardrail_status||'APPROVED'}`,
+        latStr, ev.ts, false
+      );
+      setTimeout(()=>setProgress(0),4000);
+      break;
+    }
+
+    case 'connected': {
+      addSysEvent('📡', ev.message||'Tracer conectado');
+      break;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  EXECUTION GROUPS
+// ══════════════════════════════════════════════════════
+function openExecGroup(num, ev) {
+  const feed = document.getElementById('log-feed');
+
+  // Colors per intent
+  const intentColors = {
+    DISSECAR_RESPOSTA:'#c084fc', DUVIDA_CHAT:'#60a5fa',
+    BUSCAR_QUESTAO:'#22d3ee',   MONTAR_SIMULADO:'#fcd34d',
+  };
+  const col = intentColors[ev.intent] || '#60a5fa';
+  const trigCfg = TRIG_CFG[ev.trigger_action] || {};
+  const now = fmtTime(ev.ts);
+
+  const group = document.createElement('div');
+  group.className = 'exec-group';
+  group.id = `exec-${num}`;
+  group.style.borderColor = col+'44';
+
+  const header = document.createElement('div');
+  header.className = 'exec-header';
+  header.style.background = col+'1a';
+  header.innerHTML = `
+    <div class="exec-num" style="color:${col};border-color:${col}">${num}</div>
+    <div class="exec-header-body">
+      <div class="exec-title" style="color:${col}">
+        ${trigCfg.icon||'⚡'} ${ev.trigger_detail || ev.intent}
+      </div>
+      <div class="exec-sub">
+        ${[ev.certame, ev.question_discipline, ev.question_subject].filter(Boolean).join(' · ')}
+        ${ev.alternative_selected ? '· Alt <strong>'+ev.alternative_selected+'</strong>' : ''}
+        ${ev.user_message ? '· "'+ev.user_message.slice(0,45)+'"' : ''}
+      </div>
+    </div>
+    <div class="exec-header-right">
+      <span class="exec-time">${now}</span>
+      <span class="exec-dur pending" id="dur-exec-${num}">…</span>
+      <span class="exec-status-badge running" id="status-exec-${num}">executando</span>
+    </div>
+    <div class="exec-toggle" id="toggle-${num}">▾</div>`;
+
+  header.addEventListener('click', () => toggleGroup(group, num));
+
+  const events = document.createElement('div');
+  events.className = 'exec-events';
+  events.id = `events-${num}`;
+
+  if (ev.question_preview) {
+    const preview = document.createElement('div');
+    preview.style.cssText = 'font-size:9.5px;color:#cbd5e1;font-family:monospace;background:#0b1525;border-radius:4px;padding:4px 8px;margin:4px 0 2px;border-left:2px solid #334155;line-height:1.4';
+    preview.textContent = `"${ev.question_preview}${ev.question_preview.length>=90?'…':''}"`;
+    events.appendChild(preview);
+  }
+
+  group.appendChild(header);
+  group.appendChild(events);
+  feed.insertBefore(group, feed.firstChild);
+
+  currentGroup = group;
+  currentEventsEl = events;
+  currentGroupId = num;
+
+  document.getElementById('exec-count-badge').textContent = execCount + ' execuções';
+}
+
+function closeExecGroup(latStr, guardrailStatus) {
+  if (!currentGroupId) return;
+  const durEl = document.getElementById(`dur-exec-${currentGroupId}`);
+  const statusEl = document.getElementById(`status-exec-${currentGroupId}`);
+  if (durEl) { durEl.textContent = latStr; durEl.classList.remove('pending'); }
+  if (statusEl) {
+    statusEl.textContent = guardrailStatus;
+    statusEl.className = `exec-status-badge ${guardrailStatus}`;
+  }
+}
+
+function appendToGroup(cls, icon, html, dur='', ts='', showDetailsBtn=false, evId=null) {
+  if (!currentEventsEl) return;
+  totalEvents++;
+  document.getElementById('log-count-badge').textContent = totalEvents + ' eventos';
+
+  const el = document.createElement('div');
+  el.className = `ev ${cls}`;
+  el.innerHTML = `
+    <div class="ev-icon">${icon}</div>
+    <div class="ev-body">
+      <div class="ev-text">${html}</div>
+    </div>
+    <div>
+      ${showDetailsBtn ? `<button class="ev-btn-details">Ver In/Out JSON</button>` : ''}
+    </div>
+    <div class="ev-right">
+      ${dur ? `<div class="ev-dur">${dur}</div>` : ''}
+      <div class="ev-time">${fmtTime(ts)}</div>
+    </div>`;
+
+  if (showDetailsBtn && evId) {
+    el.addEventListener('click', () => openModal(evId));
+    const btn = el.querySelector('.ev-btn-details');
+    btn.addEventListener('click', (e) => { e.stopPropagation(); openModal(evId); });
+  }
+
+  currentEventsEl.appendChild(el);
+  const logFeed = document.getElementById('log-feed');
+  logFeed.scrollTop = logFeed.scrollHeight; 
+}
+
+function addSysEvent(icon, text) {
+  const feed = document.getElementById('log-feed');
+  const el = document.createElement('div');
+  el.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:5px;border:1px dashed #334155;margin-bottom:2px;flex-shrink:0;';
+  el.innerHTML = `<span style="font-size:11px">${icon}</span><span style="font-size:10px;color:#cbd5e1">${text}</span><span style="font-size:8.5px;color:#94a3b8;margin-left:auto">${fmtTime()}</span>`;
+  feed.insertBefore(el, feed.firstChild);
+}
+
+function toggleGroup(group, num) {
+  group.classList.toggle('collapsed');
+  const t = document.getElementById(`toggle-${num}`);
+  if (t) t.textContent = group.classList.contains('collapsed') ? '▸' : '▾';
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL / JSON FORMATTER
+// ══════════════════════════════════════════════════════
+function syntaxHighlight(json) {
+  if (typeof json != 'string') {
+    json = JSON.stringify(json, null, 2);
+  }
+  if (!json) return '';
+  json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+    var cls = 'j-num';
+    if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+            cls = 'j-key';
+        } else {
+            cls = 'j-str';
+        }
+    } else if (/true|false/.test(match)) {
+        cls = 'j-bool';
+    } else if (/null/.test(match)) {
+        cls = 'j-null';
+    }
+    return '<span class="' + cls + '">' + match + '</span>';
+  });
+}
+
+function openModal(evId) {
+  const ev = eventStore[evId];
+  if (!ev) return;
+  const modal = document.getElementById('modal-details');
+  const title = document.getElementById('modal-title');
+  const body = document.getElementById('modal-body');
+
+  let html = '';
+  if (ev.type === 'node_start') {
+    title.innerHTML = `${EM[ev.node]||'📦'} Detalhes do Nó: <strong>${ev.label}</strong> (Entrada)`;
+    html += `
+      <div class="json-block">
+        <div class="json-block-header">Estado de Entrada (Inputs)</div>
+        <pre class="json-pre">${syntaxHighlight(ev.inputs || ev.state)}</pre>
+      </div>`;
+  } else if (ev.type === 'node_end') {
+    title.innerHTML = `${EM[ev.node]||'📦'} Detalhes do Nó: <strong>${ev.label}</strong> (Saída)`;
+    html += `
+      <div class="json-block">
+        <div class="json-block-header">Resultado do Nó (Outputs / Diferencial)</div>
+        <pre class="json-pre">${syntaxHighlight(ev.outputs || {})}</pre>
+      </div>
+      <div class="json-block">
+        <div class="json-block-header">Snapshot do Estado Consolidado</div>
+        <pre class="json-pre">${syntaxHighlight(ev.state || {})}</pre>
+      </div>`;
+  }
+
+  body.innerHTML = html;
+  modal.classList.add('open');
+}
+
+document.getElementById('btn-close-modal').addEventListener('click', () => {
+  document.getElementById('modal-details').classList.remove('open');
+});
+document.getElementById('modal-details').addEventListener('click', (e) => {
+  if(e.target === document.getElementById('modal-details')) {
+    document.getElementById('modal-details').classList.remove('open');
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  TRIGGER CARD
+// ══════════════════════════════════════════════════════
+function updateTrigger(ev) {
+  const cfg = TRIG_CFG[ev.trigger_action] || {icon:'⚡',label:ev.intent,cls:''};
+  const card = document.getElementById('trig-card');
+  card.className = cfg.cls ? cfg.cls : '';
+  document.getElementById('trig-icon').textContent = cfg.icon;
+  document.getElementById('trig-label').textContent = cfg.label || ev.intent;
+  document.getElementById('trig-label').style.color = '#f8fafc';
+  const badge = document.getElementById('tbadge');
+  badge.className = `tbadge ${ev.trigger_action||'idle'}`;
+  badge.textContent = ev.trigger_action || ev.intent;
+  document.getElementById('trig-detail').textContent = ev.trigger_detail || ev.user_message || `intent=${ev.intent}`;
+  document.getElementById('trig-detail').style.color = '#cbd5e1';
+  const qp = document.getElementById('trig-preview');
+  qp.textContent = ev.question_preview ? `"${ev.question_preview}${ev.question_preview.length>=90?'…':''}"` : '—';
+  qp.style.color = '#e2e8f0';
+  const meta = [];
+  if (ev.certame) meta.push(ev.certame);
+  if (ev.question_discipline) meta.push(ev.question_discipline);
+  if (ev.question_subject && ev.question_subject!==ev.question_discipline) meta.push(ev.question_subject);
+  if (ev.estilo) meta.push('Estilo: '+ev.estilo);
+  if (ev.alternative_selected) meta.push('Alt: '+ev.alternative_selected);
+  document.getElementById('trig-pills').innerHTML = meta.map(p=>`<span class="pill">${p}</span>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  NODE VISUALS
+// ══════════════════════════════════════════════════════
+function setNodeActive(nodeId) {
+  if (currentNode && currentNode!==nodeId && !doneNodes.has(currentNode)) {
+    const p = document.getElementById('r-'+currentNode);
+    if (p) p.classList.remove('active');
+  }
+  const el = document.getElementById('r-'+nodeId); if(!el) return;
+  el.classList.remove('idle','done','rej');
+  el.classList.add('active');
+  el.style.stroke = NC[nodeId]||'#60a5fa';
+  currentNode = nodeId;
+  // agent card
+  const col = NC[nodeId];
+  document.getElementById('ag-em').textContent = EM[nodeId]||'•';
+  document.getElementById('ag-name').textContent = nodeId;
+  document.getElementById('ag-name').style.color = col;
+  document.getElementById('ag-tools').innerHTML = (TOOLS[nodeId]||[]).map(t=>`<span class="atool" style="color:${col};border-color:${col}40">${t}</span>`).join('');
+  document.getElementById('ag-dur').textContent = 'executando…';
+  document.getElementById('ag-card').style.borderColor = col+'66';
+  document.getElementById('ag-card').style.background  = col+'11';
+}
+function setNodeDone(nodeId, status) {
+  const el = document.getElementById('r-'+nodeId); if(!el) return;
+  el.classList.remove('active','idle');
+  el.classList.add(status==='rejected'?'rej':'done');
+  el.style.stroke = status==='rejected'?'#ef4444':'#4ade80';
+  doneNodes.add(nodeId);
+}
+function setDur(nodeId, ms) {
+  const el = document.getElementById('dur-'+nodeId); if(!el) return;
+  el.textContent = (ms||0).toFixed(0)+'ms'; el.style.opacity='1';
+  document.getElementById('ag-dur').textContent = 'Concluído em '+(ms||0).toFixed(0)+'ms';
+}
+function resetGraph() {
+  doneNodes.clear(); currentNode=null;
+  ['router','retriever','mentor','guardrail','profiler'].forEach(n=>{
+    const el=document.getElementById('r-'+n);
+    if(el){el.className='nr idle';el.style.stroke='';}
+    const d=document.getElementById('dur-'+n);
+    if(d){d.style.opacity='0';}
+  });
+  Object.keys(EDGE_COORDS).forEach(k=>{
+    const el=document.getElementById('e-'+k);
+    if(el){el.classList.remove('live');el.style.stroke='';el.setAttribute('marker-end','url(#a0)');}
+  });
+  document.getElementById('ag-em').textContent='—';
+  document.getElementById('ag-name').textContent='Executando…';
+  document.getElementById('ag-name').style.color='#60a5fa';
+  document.getElementById('ag-tools').innerHTML='';
+  document.getElementById('ag-dur').textContent='';
+  document.getElementById('ag-card').style.borderColor='';
+  document.getElementById('ag-card').style.background='';
+}
+
+// ══════════════════════════════════════════════════════
+//  PARTICLE / EDGE
+// ══════════════════════════════════════════════════════
+function animEdge(key, col) {
+  const edgeEl = document.getElementById('e-'+key);
+  if (edgeEl) {
+    edgeEl.classList.add('live');
+    edgeEl.style.stroke = col;
+    const mk = {'#60a5fa':'ab','#22d3ee':'ac','#c084fc':'ap','#4ade80':'ag','#f87171':'ar'}[col]||'ab';
+    edgeEl.setAttribute('marker-end',`url(#${mk})`);
+    setTimeout(()=>{edgeEl.classList.remove('live');edgeEl.style.stroke='';edgeEl.setAttribute('marker-end','url(#a0)');},1400);
+  }
+  const c = EDGE_COORDS[key]; if(!c) return;
+  const p = document.getElementById('ptcl');
+  p.setAttribute('fill',col);
+  p.style.filter = `drop-shadow(0 0 5px ${col})`;
+  p.setAttribute('opacity','1');
+  let t=0; const S=42;
+  function tick(){
+    if(t>S){p.setAttribute('opacity','0');return;}
+    p.setAttribute('cx',c.x1+(c.x2-c.x1)*(t/S));
+    p.setAttribute('cy',c.y1+(c.y2-c.y1)*(t/S));
+    t++; requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ══════════════════════════════════════════════════════
+//  STATE UI
+// ══════════════════════════════════════════════════════
+function updateState(s) {
+  const M = {
+    intent_detected:       ['s-intent', v=>['DISSECAR_RESPOSTA','DUVIDA_CHAT'].includes(v)?'purple':'blue'],
+    guardrail_status:      ['s-gs',     v=>v==='APPROVED'?'green':v==='REJECTED'?'red':'yellow'],
+    is_correct:            ['s-correct',v=>v===true||v==='true'?'green':v===false||v==='false'?'red':''],
+    verification_attempts: ['s-att',    ()=>'blue'],
+    error_classification:  ['s-ec',     ()=>'yellow'],
+    estilo_didatico:       ['s-est',    ()=>'purple'],
+  };
+  Object.entries(s).forEach(([k,v])=>{
+    const e=M[k]; if(!e||v==null) return;
+    const el=document.getElementById(e[0]); if(!el) return;
+    el.textContent=String(v); el.className='sv '+(e[1](v)||'');
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  BADGE / PROGRESS / UTILS
+// ══════════════════════════════════════════════════════
+function setBadge(cls,text) {
+  const b=document.getElementById('cbadge');
+  b.className=cls;
+  document.getElementById('ctext').textContent=text;
+  b.querySelector('.cdot').classList.toggle('pulse',cls!=='error');
+}
+function setProgress(pct){ document.getElementById('prog-fill').style.width=pct+'%'; }
+function fmtTime(ts) {
+  const d = ts ? new Date(ts) : new Date();
+  return d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// ══════════════════════════════════════════════════════
+//  RESIZE HANDLE (drag to resize log panel)
+// ══════════════════════════════════════════════════════
+(function() {
+  const handle = document.getElementById('resize-handle');
+  let dragging = false, startY = 0, startLogH = 0;
+
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startY = e.clientY;
+    const logPanel = document.querySelector('.log-panel');
+    startLogH = logPanel.getBoundingClientRect().height;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const delta = startY - e.clientY; // drag up = bigger log
+    const newH = Math.max(120, Math.min(window.innerHeight - 200, startLogH + delta));
+    document.body.style.gridTemplateRows = `44px 1fr 8px ${newH}px`;
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
+
+// ══════════════════════════════════════════════════════
+//  CONTROLS
+// ══════════════════════════════════════════════════════
+document.getElementById('btn-connect').addEventListener('click', connect);
+
+document.getElementById('btn-clear').addEventListener('click', () => {
+  resetGraph();
+  execCount=0; rejCount=0; nodeCount=0; totalEvents=0;
+  document.getElementById('m-exec').textContent='0';
+  document.getElementById('m-lat').textContent='—';
+  document.getElementById('m-rej').textContent='0';
+  document.getElementById('m-nds').textContent='0';
+  document.getElementById('log-feed').innerHTML='';
+  document.getElementById('exec-count-badge').textContent='0 execuções';
+  document.getElementById('log-count-badge').textContent='0 eventos';
+  currentGroup=null; currentEventsEl=null; currentGroupId=null;
+  setProgress(0);
+  // Reset trigger
+  document.getElementById('trig-card').className='';
+  document.getElementById('trig-icon').textContent='⏳';
+  document.getElementById('trig-label').textContent='Nenhuma ação capturada';
+  document.getElementById('trig-label').style.color='#cbd5e1';
+  document.getElementById('tbadge').className='tbadge idle';
+  document.getElementById('tbadge').textContent='AGUARDANDO';
+  document.getElementById('trig-detail').textContent='Use o frontend para disparar o fluxo.';
+  document.getElementById('trig-detail').style.color='#cbd5e1';
+  document.getElementById('trig-preview').textContent='—';
+  document.getElementById('trig-preview').style.color='#cbd5e1';
+  document.getElementById('trig-pills').innerHTML='';
+});
+
+document.getElementById('btn-clear-log').addEventListener('click', () => {
+  document.getElementById('log-feed').innerHTML='';
+  totalEvents=0;
+  document.getElementById('log-count-badge').textContent='0 eventos';
+  document.getElementById('exec-count-badge').textContent='0 execuções';
+  execCount=0; currentGroup=null; currentEventsEl=null; currentGroupId=null;
+});
+
+document.getElementById('btn-collapse-all').addEventListener('click', () => {
+  document.querySelectorAll('.exec-group').forEach((g,_)=>{
+    const num = g.id.replace('exec-','');
+    if(!g.classList.contains('collapsed')){
+      g.classList.add('collapsed');
+      const t=document.getElementById('toggle-'+num);
+      if(t) t.textContent='▸';
+    }
+  });
+});
+
+document.getElementById('btn-expand-all').addEventListener('click', () => {
+  document.querySelectorAll('.exec-group').forEach(g=>{
+    const num = g.id.replace('exec-','');
+    g.classList.remove('collapsed');
+    const t=document.getElementById('toggle-'+num);
+    if(t) t.textContent='▾';
+  });
+});
+
+// ══════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════
+connect();
+</script>
+</body>
+</html>

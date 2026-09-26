@@ -3,6 +3,7 @@ lg2m/backend/app/api/v1/attempts.py
 Endpoints REST para submissão de respostas com Gabarito Blindado e acionamento do fluxo multiagente.
 """
 
+import time
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -10,6 +11,7 @@ from app.core.database import get_db
 from app.models.entities import Questao, PerfilEstudante
 from app.schemas.api_schemas import QuestionAttemptRequest, QuestionAttemptResponse
 from app.agents.graph import multiagent_engine
+from app.core.agent_tracer import tracer
 
 router = APIRouter(prefix="/attempts", tags=["Resolução Interativa & Mentoria"])
 
@@ -62,7 +64,24 @@ def submit_question_attempt(
     }
 
     # Executa a máquina de estados do LangGraph (Router -> Mentor -> Guardrail -> Profiler)
+    tracer.emit_graph_start(
+        intent="DISSECAR_RESPOSTA",
+        certame=q.certame.sigla if q.certame else "PSC",
+        estilo=req.estilo_didatico.upper(),
+        trigger_action="RESPOSTA_MARCADA",
+        trigger_detail=f"Alternativa ({letra_marcada}) marcada — {'✓ CORRETA' if acertou else '✗ ERRADA'}",
+        question_id=q.id,
+        question_discipline=q.disciplina_nome or "",
+        question_subject=(q.assunto_rel.nome if q.assunto_rel else q.disciplina_nome) or "",
+        question_preview=(q.enunciado or "")[:90],
+        alternative_selected=letra_marcada,
+    )
+    t0 = time.perf_counter()
     result = multiagent_engine.invoke(state_input)
+    tracer.emit_graph_end(
+        total_ms=(time.perf_counter() - t0) * 1000,
+        guardrail_status=result.get("guardrail_status", "APPROVED"),
+    )
 
     return QuestionAttemptResponse(
         acertou=acertou,

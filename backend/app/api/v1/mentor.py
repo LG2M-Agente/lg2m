@@ -5,6 +5,7 @@ Endpoints para diálogo socrático e streaming de explicações pedagógicas em 
 
 import asyncio
 import json
+import time
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -13,6 +14,7 @@ from app.core.database import get_db
 from app.models.entities import Questao, SessaoMentoria, MensagemMentoria
 from app.schemas.api_schemas import MentorChatRequest
 from app.agents.graph import multiagent_engine
+from app.core.agent_tracer import tracer
 
 router = APIRouter(prefix="/mentor", tags=["Chat & Streaming do Mentor"])
 
@@ -45,7 +47,21 @@ def chat_with_mentor(req: MentorChatRequest, db: Session = Depends(get_db)):
         "messages": [{"role": "user", "content": req.mensagem}],
     }
 
+    tracer.emit_graph_start(
+        intent="DUVIDA_CHAT",
+        certame=q.certame.sigla if q.certame else "PSC",
+        estilo=req.estilo_didatico.upper(),
+        trigger_action="CHAT_PERGUNTA",
+        trigger_detail=f"Pergunta no chat: \"{(req.mensagem or '')[:60]}\"",
+        question_id=q.id,
+        question_discipline=q.disciplina_nome or "",
+        question_subject=(q.assunto_rel.nome if q.assunto_rel else q.disciplina_nome) or "",
+        question_preview=(q.enunciado or "")[:90],
+        user_message=req.mensagem or "",
+    )
+    t0 = time.perf_counter()
     result = multiagent_engine.invoke(state_input)
+    tracer.emit_graph_end(total_ms=(time.perf_counter() - t0) * 1000, guardrail_status=result.get("guardrail_status", "APPROVED"))
     resposta = result.get("verified_response") or result.get("mentor_draft_response", "")
 
     return {
@@ -89,7 +105,21 @@ async def stream_mentor_response(
         "messages": [],
     }
 
+    tracer.emit_graph_start(
+        intent="DISSECAR_RESPOSTA",
+        certame=q.certame.sigla if q.certame else "PSC",
+        estilo=style.upper(),
+        trigger_action="STREAM_MENTORIA",
+        trigger_detail=f"SSE Stream — Alt ({alternative.upper()}) · {style.upper()}",
+        question_id=q.id,
+        question_discipline=q.disciplina_nome or "",
+        question_subject=(q.assunto_rel.nome if q.assunto_rel else q.disciplina_nome) or "",
+        question_preview=(q.enunciado or "")[:90],
+        alternative_selected=alternative.upper(),
+    )
+    t0 = time.perf_counter()
     result = multiagent_engine.invoke(state_input)
+    tracer.emit_graph_end(total_ms=(time.perf_counter() - t0) * 1000, guardrail_status=result.get("guardrail_status", "APPROVED"))
     full_text = result.get("verified_response") or "Explicação do mentor."
 
     async def event_generator():
